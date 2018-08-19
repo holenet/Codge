@@ -4,7 +4,7 @@ import android.util.Log
 import kotlin.math.*
 
 enum class Direction(val rotation: Int) {
-    STP(0), CCW(1), CW(-1)
+    STP(0), CCW(-1), CW(1)
 }
 
 fun Double.toDegree() = (this * 180 / PI).toFloat()

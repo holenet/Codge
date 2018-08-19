@@ -16,8 +16,8 @@ class GameActivity : AppCompatActivity() {
         setContentView(R.layout.activity_game)
 
         val onStartPlayHandler = Handler {
-            bTccw.visibility = View.VISIBLE
-            bTcw.visibility = View.VISIBLE
+            (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.GONE
+            (if (it.what == Direction.CCW.rotation) bTccw else bTcw).visibility = View.VISIBLE
             bTjump.visibility = View.VISIBLE
 
             bTleft.visibility = View.GONE
@@ -60,13 +60,13 @@ class GameActivity : AppCompatActivity() {
                     // buttons on ready
                     bTleft.setOnTouchListener { v, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
-                            if (startDirection == null) startDirection = Direction.CCW
+                            if (startDirection == null) startDirection = Direction.CW
                         }
                         true
                     }
                     bTright.setOnTouchListener { v, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
-                            if (startDirection == null) startDirection = Direction.CW
+                            if (startDirection == null) startDirection = Direction.CCW
                         }
                         true
                     }
