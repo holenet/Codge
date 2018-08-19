@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.util.Log
 import android.view.SurfaceView
 import kotlin.math.atan2
 import kotlin.math.max
@@ -15,7 +14,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     companion object {
         const val TICKS_PER_SECOND = 50
         const val SKIP_MILLIS = 1000 / TICKS_PER_SECOND
-        const val MAX_FRAME_SKIP = 10
+        const val MAX_FRAME_SKIP = 5
         const val MAX_BALLS_NUM = 8
 
         enum class GameMode {
@@ -44,6 +43,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var innerRadius = outerRadius.toFloat()
     private val paint = Paint().apply {
         textAlign = Paint.Align.CENTER
+        style = Paint.Style.FILL
         typeface =  Typeface.MONOSPACE
     }
 
@@ -56,6 +56,16 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     var onStartPlay = {dir: Direction -> }
     var onGameOver = {}
     var onPlayerTurn = {dir: Direction -> }
+
+    // calculate fps
+    // NOTE: This is for development environment, should be erased on the production releases
+    private var currentFPS = 0
+    private var nextIndex = 0L
+    private var nextFPS = 0
+    private val paintFPS = Paint().apply {
+        textAlign = Paint.Align.RIGHT
+        color = 0xFF00AA11.toInt()
+    }
 
     init {
         initialize(Direction.STP)
@@ -167,16 +177,16 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private fun draw() {
         if (holder.surface.isValid) {
             with (holder.lockCanvas()) {
-                drawColor(Color.TRANSPARENT)
+                drawColor(Color.WHITE)
 
+                save()
                 translate(outerRadius.toFloat(), outerRadius.toFloat())
-                paint.color = Color.WHITE
+                paint.color = Color.LTGRAY
                 drawCircle(0f, 0f, innerRadius, paint)
 
                 if (!firstPlay) {
                     // draw time
                     val time = "%.2f".format(gameTicks * SKIP_MILLIS / 1000f)
-                    paint.style = Paint.Style.FILL
                     paint.color = Color.BLACK
                     paint.textSize = innerRadius / 5
                     val timeHeight = paint.textHeight
@@ -210,6 +220,19 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
                 restore()
                 // draw models end
+
+                restore()
+                // draw fps
+                // NOTE: This is for development environment, should be erased on the production releases
+                val currentIndex = System.currentTimeMillis() / 1000
+                if (nextIndex != currentIndex) {
+                    nextIndex = currentIndex
+                    currentFPS = nextFPS
+                    nextFPS = 0
+                }
+                nextFPS++
+                paintFPS.textSize = outerRadius / 6f
+                drawText("$currentFPS", outerRadius * 1.95f, outerRadius * 2 - paint.fontMetrics.bottom, paintFPS)
 
                 holder.unlockCanvasAndPost(this)
             }
