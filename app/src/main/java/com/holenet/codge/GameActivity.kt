@@ -1,5 +1,6 @@
 package com.holenet.codge
 
+import android.animation.ValueAnimator
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -14,6 +15,16 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
+
+        ValueAnimator.setFrameDelay(24)
+        with (ValueAnimator.ofInt(0, 2000)) {
+            duration = 2000
+            addUpdateListener {
+                val value = it.animatedFraction
+                fLfade.alpha = 1 - value
+            }
+            start()
+        }
 
         val onStartPlayHandler = Handler {
             (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.GONE

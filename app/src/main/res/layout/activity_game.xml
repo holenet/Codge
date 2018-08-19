@@ -113,4 +113,17 @@
         app:layout_constraintTop_toTopOf="parent">
 
     </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fLfade"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#ffF"
+        android:elevation="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </FrameLayout>
 </android.support.constraint.ConstraintLayout>
