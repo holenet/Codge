@@ -167,13 +167,15 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         if (gameMode == GameMode.PLAYING) {
             player.update()
             while (balls.size < MAX_BALLS_NUM && balls.size - 2 < gameTicks / 250) {
+                var count = 0
                 while (true) {
                     val theta = (Math.random() * 360 - 180).toFloat()
                     if (theta diff player.theta < 110)
                         continue
                     val ball = BouncingBall(theta, 0f)
                     val vector = atan2(player.y - ball.y, player.x - ball.x).toDouble().toDegree()
-                    if ((theta inc 180f) diff vector < 10)
+                    count++
+                    if ((theta inc 180f) diff vector < 10 && count < 10)
                         continue
                     ball.vector = vector
                     balls.add(ball)
