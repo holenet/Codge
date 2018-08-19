@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Codge</string>
+    <string name="pref_best_score">best_score</string>
+</resources>
