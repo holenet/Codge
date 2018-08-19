@@ -2,12 +2,11 @@ package com.holenet.codge
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
+import android.graphics.*
 import android.view.SurfaceView
 import kotlin.math.atan2
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 class GameView(context: Context, private val outerRadius: Int): SurfaceView(context), Runnable {
@@ -39,6 +38,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private val player = Player()
     private val balls = ArrayList<Ball>()
 
+    // bitmaps
+    private var playerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+
     // drawing
     private var innerRadius = outerRadius.toFloat()
     private val paint = Paint().apply {
@@ -68,7 +70,24 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     init {
+        loadBitmaps()
         initialize(Direction.STP)
+    }
+
+    private fun loadBitmaps() {
+        val playerRadius = innerRadius * Player.RADIUS_SCALE
+        val playerColorBase = 0xFF333333.toInt()
+        val playerColorDeco = 0xFFFFCC33.toInt()
+        playerBitmap = Bitmap.createBitmap((playerRadius * 2).roundToInt(), (playerRadius * 2).roundToInt(), Bitmap.Config.ARGB_8888)
+        with (Canvas(playerBitmap)) {
+            translate(playerRadius, playerRadius)
+            scale(playerRadius, playerRadius)
+            drawCircle(0f, 0f, 1f, Paint().apply { color = playerColorBase })
+            val decoBitmap = BitmapFactory.decodeResource(resources, R.drawable.player_deco)
+            drawBitmap(decoBitmap, Rect(0, 0, decoBitmap.width, decoBitmap.height), Rect(-1, -1, 1, 1), Paint().apply {
+                colorFilter = PorterDuffColorFilter(playerColorDeco, PorterDuff.Mode.SRC_IN)
+            })
+        }
     }
 
     private fun initialize(dir: Direction) {
@@ -200,26 +219,19 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     drawText(bestTime, 0f, -timeHeight, paint)
                 }
 
-                // draw models start
-                save()
-                scale(innerRadius, innerRadius)
-
                 // draw player
                 save()
-                translate(player.x, player.y)
+                translate(innerRadius * player.x, innerRadius * player.y)
                 rotate(-player.theta / Player.RADIUS_SCALE)
                 paint.color = Color.BLUE
-                drawCircle(0f, 0f, player.r, paint)
+                drawBitmap(playerBitmap, -playerBitmap.width / 2f, -playerBitmap.height / 2f, null)
                 restore()
 
                 // draw balls
                 paint.color = Color.RED
                 for (ball in balls) {
-                    drawCircle(ball.x, ball.y, ball.r, paint)
+                    drawCircle(innerRadius * ball.x, innerRadius * ball.y, innerRadius * ball.r, paint)
                 }
-
-                restore()
-                // draw models end
 
                 restore()
                 // draw fps
