@@ -10,6 +10,9 @@ import android.view.ViewTreeObserver
 import kotlinx.android.synthetic.main.activity_game.*
 
 class GameActivity : AppCompatActivity() {
+    companion object {
+        const val FADE_IN_TIME = 1500
+    }
     var gameView: GameView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,8 +20,8 @@ class GameActivity : AppCompatActivity() {
         setContentView(R.layout.activity_game)
 
         ValueAnimator.setFrameDelay(24)
-        with (ValueAnimator.ofInt(0, 2000)) {
-            duration = 2000
+        with (ValueAnimator.ofInt(0, FADE_IN_TIME)) {
+            duration = FADE_IN_TIME.toLong()
             addUpdateListener {
                 val value = it.animatedFraction
                 fLfade.alpha = 1 - value

@@ -10,8 +10,8 @@ import kotlin.math.abs
 
 class LoaderActivity : AppCompatActivity() {
     companion object {
-        const val ANIM_TIME = 4000
-        const val FADE_TIME = 1200
+        const val ANIM_TIME = 3000
+        const val FADE_TIME = 1100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
