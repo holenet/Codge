@@ -24,7 +24,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     // game running
     @Volatile var running = false
-    private var gameMode = GameMode.READY
+    var gameMode = GameMode.READY; private set
     private var flagGameOver = false
     private var gameTicks = 0
     private var gameThread: Thread? = null
@@ -95,6 +95,10 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private fun initialize(dir: Direction) {
         gameTicks = 0
 
+        startDirection = null
+        toTurn = false
+        toJump = false
+
         player.initialize(dir)
 
         balls.clear()
@@ -133,9 +137,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     private fun gameOver() {
         flagGameOver = false
-        startDirection = null
-        toTurn = false
-        toJump = false
+
         onGameOver()
         with(pref.edit()) {
             putInt(prefKeyBaseScore, bestScore)

@@ -83,13 +83,13 @@ class GameActivity : AppCompatActivity() {
                     // buttons on ready
                     bTleft.setOnTouchListener { v, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
-                            if (startDirection == null) startDirection = Direction.CW
+                            if (gameMode == GameView.Companion.GameMode.READY) startDirection = Direction.CW
                         }
                         true
                     }
                     bTright.setOnTouchListener { v, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
-                            if (startDirection == null) startDirection = Direction.CCW
+                            if (gameMode == GameView.Companion.GameMode.READY) startDirection = Direction.CCW
                         }
                         true
                     }

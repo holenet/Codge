@@ -67,6 +67,7 @@ class Player : Model {
         theta = 90f
         speed = 0f
         this.dir = dir
+        jumping = false
         jumpMode = JumpMode.LANDED
         verticalSpeed = 0f
         height = 0f
