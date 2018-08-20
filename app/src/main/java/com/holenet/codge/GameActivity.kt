@@ -5,7 +5,6 @@ import android.animation.ValueAnimator
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
@@ -15,8 +14,7 @@ import kotlin.math.abs
 class GameActivity : AppCompatActivity() {
     companion object {
         const val FADE_IN_TIME = 1500
-        const val UI_ANIM_TIME_SHORT = 300
-        const val UI_ANIM_TIME_LONG = 500
+        const val UI_ANIM_TIME = 500
     }
     var gameView: GameView? = null
 
@@ -40,7 +38,7 @@ class GameActivity : AppCompatActivity() {
         }
 
         // UI handler
-        val onStartPlayHandler = Handler {
+        val onPrepareHandler = Handler {
             (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.INVISIBLE
             (if (it.what == Direction.CCW.rotation) bTccw else bTcw).visibility = View.VISIBLE
             changeMode(true)
@@ -70,8 +68,8 @@ class GameActivity : AppCompatActivity() {
                     fLgame.addView(this)
 
                     // set callbacks
-                    onStartPlay = {dir ->
-                        onStartPlayHandler.sendEmptyMessage(dir.rotation)
+                    onPrepare = { dir ->
+                        onPrepareHandler.sendEmptyMessage(dir.rotation)
                     }
                     onGameOver = {
                         onGameOverHandler.sendEmptyMessage(0)
@@ -124,7 +122,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     var anim: ValueAnimator? = null
-    var currentValue = 0f
+    private var currentValue = 0f
     var colorX = 0f
     var rightX = 0f
     private fun changeMode(onPlay: Boolean) {
@@ -140,7 +138,7 @@ class GameActivity : AppCompatActivity() {
         }
 
         // basic animation setting
-        val animTIme = if (onPlay) UI_ANIM_TIME_SHORT else UI_ANIM_TIME_LONG
+        val animTIme = UI_ANIM_TIME
         if (anim?.isRunning == true) anim?.cancel()
         ValueAnimator.setFrameDelay(24)
 

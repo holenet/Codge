@@ -23,6 +23,37 @@ infix fun Float.diff(f: Float): Float {
 }
 
 interface Model {
+    class LinearAnimator {
+        private var model: Model?
+        private val sx: Float
+        private val sy: Float
+        private val dx: Float
+        private val dy: Float
+        private val step: Int
+        private var current: Int = 0
+
+        constructor(start: Model, end: Model, step: Int) {
+            model = start
+            sx = start.x
+            sy = start.y
+            dx = end.x - sx
+            dy = end.y - sy
+            this.step = step
+        }
+
+        fun update() {
+            current++
+            val value = (0.5f - 0.5f * cos(current * PI / step)).toFloat()
+            model?.x = sx + dx * value
+            model?.y = sy + dy * value
+
+            if (current >= step) {
+                model?.anim = null
+                model = null
+            }
+        }
+    }
+
     companion object {
         const val SPEED_LIMIT = 0.033f
 
@@ -30,8 +61,11 @@ interface Model {
     }
 
     val r: Float
-    val x: Float
-    val y: Float
+    var x: Float
+    var y: Float
+    val vx: Float
+    val vy: Float
+    var anim: LinearAnimator?
 
     fun update()
 }
@@ -53,10 +87,29 @@ class Player : Model {
     var dir = Direction.STP
 
     override var r: Float = RADIUS_SCALE
-    override val x: Float
-        get() = ((1 - RADIUS_SCALE - height) * cos(theta.toRadian())).toFloat()
-    override val y: Float
-        get() = ((1 - RADIUS_SCALE - height) * sin(theta.toRadian())).toFloat()
+    override var x: Float = 0f
+        get() = if (isFree) field else ((1 - RADIUS_SCALE - height) * cos(theta.toRadian())).toFloat()
+    override var y: Float = 0f
+        get() = if (isFree) field else ((1 - RADIUS_SCALE - height) * sin(theta.toRadian())).toFloat()
+    override var vx: Float = 0f
+    override var vy: Float = 0f
+    override var anim: Model.LinearAnimator? = null
+    var isFree: Boolean = false
+        set(value) {
+            if (field == value) {
+                return
+            }
+            if (value) {
+                val thetaRadian = theta.toRadian()
+                vx = (-speed * sin(thetaRadian) -verticalSpeed * cos(thetaRadian)).toFloat()
+                vy = (speed * cos(thetaRadian) -verticalSpeed * sin(thetaRadian)).toFloat()
+                x = x
+                y = y
+            } else {
+
+            }
+            field = value
+        }
 
     var jumping = false
     var jumpMode = JumpMode.LANDED
@@ -71,9 +124,16 @@ class Player : Model {
         jumpMode = JumpMode.LANDED
         verticalSpeed = 0f
         height = 0f
+        anim = null
+        isFree = false
     }
 
     override fun update() {
+        if (anim != null) {
+            anim?.update()
+            return
+        }
+
         // Update speed
         speed += ACC_DEFAULT * dir.rotation
         if (speed > Model.SPEED_LIMIT)
@@ -135,16 +195,26 @@ interface Ball : Model {
         get() = RADIUS_SCALE
 }
 
-class RevolvingBall(var theta: Float, dir: Direction) : Ball {
+class RevolvingBall(var theta: Float, dir: Direction = Direction.STP) : Ball {
     var speed: Float = Model.SPEED_LIMIT * dir.rotation
 
-    override val x: Float
-        get() = ((1 - Player.RADIUS_SCALE) * cos(theta.toRadian())).toFloat()
-    override val y: Float
-        get() = ((1 - Player.RADIUS_SCALE) * sin(theta.toRadian())).toFloat()
+    override var x: Float = 0f
+    override var y: Float = 0f
+    override val vx: Float
+        get() = (-speed * sin(theta.toRadian())).toFloat()
+    override val vy: Float
+        get() = (speed * cos(theta.toRadian())).toFloat()
+    override var anim: Model.LinearAnimator? = null
 
     override fun update() {
+        if (anim != null) {
+            anim?.update()
+            return
+        }
+
         theta = theta inc (speed / (1 - Player.RADIUS_SCALE) * 180 / PI).toFloat()
+        x = ((1 - Player.RADIUS_SCALE) * cos(theta.toRadian())).toFloat()
+        y = ((1 - Player.RADIUS_SCALE) * sin(theta.toRadian())).toFloat()
     }
 }
 
@@ -153,10 +223,20 @@ class BouncingBall(theta: Float, var vector: Float = theta inc -180f) : Ball {
 
     override var x: Float = (1 - r) * cos(theta.toRadian()).toFloat()
     override var y: Float = (1 - r) * sin(theta.toRadian()).toFloat()
+    override val vx: Float
+        get() = (speed * cos(vector.toRadian())).toFloat()
+    override val vy: Float
+        get() = (speed * sin(vector.toRadian())).toFloat()
+    override var anim: Model.LinearAnimator? = null
 
     override fun update() {
-        x += (speed * cos(vector.toRadian())).toFloat()
-        y += (speed * sin(vector.toRadian())).toFloat()
+        if (anim != null) {
+            anim?.update()
+            return
+        }
+
+        x += vx
+        y += vy
 
         if (1 - r < hypot(x, y)) {
             reflect()

@@ -16,6 +16,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         const val SKIP_MILLIS = 1000 / TICKS_PER_SECOND
         const val MAX_FRAME_SKIP = 5
         const val MAX_BALLS_NUM = 8
+        const val PREPARE_ANIM_TIME = GameActivity.UI_ANIM_TIME
 
         enum class GameMode {
             READY, PREPARING, PLAYING, GAME_OVER
@@ -26,6 +27,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     @Volatile var running = false
     var gameMode = GameMode.READY; private set
     private var flagGameOver = false
+    private var flagGameStart = false
     private var gameTicks = 0
     private var gameThread: Thread? = null
     private var firstPlay = true
@@ -57,7 +59,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var bestScore = pref.getInt(prefKeyBaseScore, 0)
 
     // callback
-    var onStartPlay = {dir: Direction -> }
+    var onPrepare = { dir: Direction -> }
     var onGameOver = {}
     var onPlayerTurn = {dir: Direction -> }
 
@@ -116,10 +118,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 val dir = startDirection
                 startDirection = null
                 if (dir != null) {
-                    onStartPlay(dir)
-                    gameMode = GameMode.PLAYING
-                    initialize(dir)
-                    firstPlay = false
+                    prepare(dir)
                 }
             }
             GameMode.PLAYING -> {
@@ -135,15 +134,37 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         }
     }
 
+    private var startDirectionTemp = Direction.STP
+    private fun prepare(dir: Direction) {
+        gameMode = GameMode.PREPARING
+        onPrepare(dir)
+        startDirectionTemp = dir
+
+        player.anim = Model.LinearAnimator(player, Player(), PREPARE_ANIM_TIME / SKIP_MILLIS)
+        val dstBall = RevolvingBall(-90f).apply { update() }
+        for (ball in balls) {
+            ball.anim = Model.LinearAnimator(ball, dstBall, PREPARE_ANIM_TIME / SKIP_MILLIS)
+        }
+    }
+
+    private fun startPlay() {
+        flagGameStart = false
+        gameMode = GameMode.PLAYING
+
+        initialize(startDirectionTemp)
+        firstPlay = false
+    }
+
     private fun gameOver() {
         flagGameOver = false
+        gameMode = GameMode.READY
+        player.isFree = true
 
         onGameOver()
         with(pref.edit()) {
             putInt(prefKeyBaseScore, bestScore)
             apply()
         }
-        gameMode = GameMode.READY
     }
 
     override fun run() {
@@ -152,6 +173,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         while (running) {
             var loops = 0
             while (System.currentTimeMillis() > nextGameMillis && loops < MAX_FRAME_SKIP) {
+                if (flagGameStart) {
+                    startPlay()
+                }
                 if (flagGameOver)
                     gameOver()
                 processInput()
@@ -171,8 +195,12 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     private fun update() {
+        player.update()
+        if (gameMode == GameMode.PREPARING && player.anim == null) {
+            flagGameStart = true
+        }
+
         if (gameMode == GameMode.PLAYING) {
-            player.update()
             while (balls.size < MAX_BALLS_NUM && balls.size - 2 < gameTicks / 250) {
                 var count = 0
                 while (true) {
