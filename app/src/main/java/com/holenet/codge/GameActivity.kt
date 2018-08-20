@@ -30,25 +30,25 @@ class GameActivity : AppCompatActivity() {
         }
 
         val onStartPlayHandler = Handler {
-            (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.GONE
+            (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.INVISIBLE
             (if (it.what == Direction.CCW.rotation) bTccw else bTcw).visibility = View.VISIBLE
             bTjump.visibility = View.VISIBLE
 
-            bTleft.visibility = View.GONE
-            bTright.visibility = View.GONE
+            bTleft.visibility = View.INVISIBLE
+            bTright.visibility = View.INVISIBLE
             true
         }
         val onGameOverHandler = Handler {
-            bTccw.visibility = View.GONE
-            bTcw.visibility = View.GONE
-            bTjump.visibility = View.GONE
+            bTccw.visibility = View.INVISIBLE
+            bTcw.visibility = View.INVISIBLE
+            bTjump.visibility = View.INVISIBLE
 
             bTleft.visibility = View.VISIBLE
             bTright.visibility = View.VISIBLE
             true
         }
         val onPlayerTurnHandler = Handler {
-            (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.GONE
+            (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.INVISIBLE
             (if (it.what == Direction.CCW.rotation) bTccw else bTcw).visibility = View.VISIBLE
             true
         }

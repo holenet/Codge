@@ -3,6 +3,7 @@ package com.holenet.codge
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.support.v4.content.ContextCompat
 import android.view.SurfaceView
 import kotlin.math.atan2
 import kotlin.math.max
@@ -48,6 +49,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         style = Paint.Style.FILL
         typeface =  Typeface.MONOSPACE
     }
+    private val backgroundColor = ContextCompat.getColor(context, R.color.background)
 
     // score
     private val pref = context.getSharedPreferences("score", 0)
@@ -198,11 +200,11 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private fun draw() {
         if (holder.surface.isValid) {
             with (holder.lockCanvas()) {
-                drawColor(Color.WHITE)
+                drawColor(backgroundColor)
 
                 save()
                 translate(outerRadius.toFloat(), outerRadius.toFloat())
-                paint.color = Color.LTGRAY
+                paint.color = 0xFFF2F2F2.toInt()
                 drawCircle(0f, 0f, innerRadius, paint)
 
                 if (!firstPlay) {
@@ -225,12 +227,11 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 save()
                 translate(innerRadius * player.x, innerRadius * player.y)
                 rotate(-player.theta / Player.RADIUS_SCALE)
-                paint.color = Color.BLUE
                 drawBitmap(playerBitmap, -playerBitmap.width / 2f, -playerBitmap.height / 2f, null)
                 restore()
 
                 // draw balls
-                paint.color = Color.RED
+                paint.color = 0xFFF46700.toInt()
                 for (ball in balls) {
                     drawCircle(innerRadius * ball.x, innerRadius * ball.y, innerRadius * ball.r, paint)
                 }

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF"
+    android:background="@color/background"
     tools:context=".LoaderActivity">
 
     <ImageView
@@ -20,7 +20,7 @@
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/holenet_logo"
+        app:srcCompat="@drawable/holenet_logo_inverted"
         tools:alpha="1" />
 
     <android.support.constraint.Guideline

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF"
+    android:background="@color/background"
     tools:context=".GameActivity">
 
     <android.support.constraint.Guideline
@@ -21,87 +21,31 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.171583" />
 
-    <Button
+    <ImageButton
         android:id="@+id/bTscore"
+        style="@style/ImageButtonStyleSmall"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:text="Score"
-        app:layout_constraintDimensionRatio="w,1:1"
+        android:elevation="2dp"
+        android:src="@drawable/button_trophy"
+        android:contentDescription="score"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toStartOf="@+id/guideline4"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <ImageButton
         android:id="@+id/bTcolor"
+        style="@style/ImageButtonStyleSmall"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:text="Color"
+        android:elevation="2dp"
+        android:src="@drawable/button_color"
+        android:contentDescription="color"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline3"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
-
-    <FrameLayout
-        android:id="@+id/fLleft"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toStartOf="@+id/guideline5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/fLgame">
-
-        <Button
-            android:id="@+id/bTleft"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Left" />
-
-        <Button
-            android:id="@+id/bTccw"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="CCW"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/bTcw"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="CW"
-            android:visibility="gone" />
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/fLright"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline5"
-        app:layout_constraintTop_toBottomOf="@+id/fLgame">
-
-        <Button
-            android:id="@+id/bTright"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Right" />
-
-        <Button
-            android:id="@+id/bTjump"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Jump"
-            android:visibility="gone" />
-    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/fLgame"
@@ -118,12 +62,113 @@
         android:id="@+id/fLfade"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#ffF"
+        android:background="@color/background"
         android:elevation="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="gone">
 
     </FrameLayout>
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fLgame">
+
+        <android.support.constraint.Guideline
+            android:id="@+id/guideline5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <ImageButton
+            android:id="@+id/bTleft"
+            style="@style/ImageButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/button_left"
+            android:contentDescription="left"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/guideline5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/bTccw"
+            style="@style/ImageButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/button_ccw"
+            android:visibility="invisible"
+            android:contentDescription="ccw"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/guideline5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/bTcw"
+            style="@style/ImageButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/button_cw"
+            android:visibility="invisible"
+            android:contentDescription="cw"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/guideline5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/bTright"
+            style="@style/ImageButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/button_right"
+            android:contentDescription="right"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/guideline5"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/bTjump"
+            style="@style/ImageButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/button_up"
+            android:text="Jump"
+            android:visibility="invisible"
+            android:contentDescription="jump"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/guideline5"
+            app:layout_constraintTop_toTopOf="parent" />
+    </android.support.constraint.ConstraintLayout>
 </android.support.constraint.ConstraintLayout>
