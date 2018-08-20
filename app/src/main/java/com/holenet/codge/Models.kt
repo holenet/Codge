@@ -1,6 +1,5 @@
 package com.holenet.codge
 
-import android.util.Log
 import kotlin.math.*
 
 enum class Direction(val rotation: Int) {
@@ -76,6 +75,9 @@ class Player : Model {
         const val ACC_DEFAULT = 0.0017f
         const val VERTICAL_SPEED_LIMIT = 0.03f
         const val VERTICAL_ACC_DEFAULT = 0.0027f
+        const val SPEED_LIMIT_FREE = Model.SPEED_LIMIT * 2.0f
+        const val DRAG_SCALE_DEFAULT = 0.99f
+        const val ANGULAR_DRAG_SCALE_DEFAULT = 0.99f
 
         enum class JumpMode {
             LANDED, JUMPING, FALLING
@@ -83,6 +85,8 @@ class Player : Model {
     }
 
     var theta = 90f
+    var angle = 0f
+    var w = 0f
     var speed = 0f
     var dir = Direction.STP
 
@@ -105,8 +109,7 @@ class Player : Model {
                 vy = (speed * cos(thetaRadian) -verticalSpeed * sin(thetaRadian)).toFloat()
                 x = x
                 y = y
-            } else {
-
+                w = -(speed / (1 - RADIUS_SCALE) / RADIUS_SCALE * 180 / PI).toFloat()
             }
             field = value
         }
@@ -134,6 +137,35 @@ class Player : Model {
             return
         }
 
+        // free physics
+        if (isFree) {
+            // update velocity
+            val speed = hypot(vx, vy)
+            if (speed > 0) {
+                val ex = vx / speed
+                val ey = vy / speed
+                val newSpeed = min(speed, SPEED_LIMIT_FREE) * DRAG_SCALE_DEFAULT
+                vx = newSpeed * ex
+                vy = newSpeed * ey
+            }
+
+            // update position
+            x += vx
+            y += vy
+
+            // reflect on collision to the wall
+            if (1 - r < hypot(x, y))
+                reflect()
+
+            // update w
+            w *= ANGULAR_DRAG_SCALE_DEFAULT
+            angle = angle inc w
+
+            // update theta for ball creation
+            theta = atan2(y, x).toDouble().toDegree()
+            return
+        }
+
         // Update speed
         speed += ACC_DEFAULT * dir.rotation
         if (speed > Model.SPEED_LIMIT)
@@ -143,6 +175,7 @@ class Player : Model {
 
         // Update theta
         theta = theta inc (speed / (1 - RADIUS_SCALE) * 180 / PI).toFloat()
+        angle = angle inc -(speed / (1 - RADIUS_SCALE) / RADIUS_SCALE * 180 / PI).toFloat()
 
         // Update height
         when (jumpMode) {
@@ -183,6 +216,27 @@ class Player : Model {
             Direction.CW -> Direction.CCW
             else -> Direction.STP
         }
+    }
+
+    private fun reflect() {
+        // force locate inside of wall
+        val a = hypot(x, y)
+        x *= (1 - r) / a
+        y *= (1 - r) / a
+
+        // update velocity
+        val n = x * x + y * y
+        val nvx = (2 * y * y / n - 1) * vx + (-2 * x * y) * vy
+        val nvy = (-2 * x * y) * vx + (2 * x * x / n - 1) * vy
+        this.vx = nvx
+        this.vy = nvy
+
+        // update w
+        val vhx = vx - (x * x / n * vx + x * y / n * vy)
+        val vhy = vy - (x * y / n * vy + y * y / n * vy)
+        val aw = (hypot(vhx, vhy) / (1 - RADIUS_SCALE) / RADIUS_SCALE * 180 / PI).toFloat()
+        val h = y * vhx - x * vhy
+        w = 0.6f * w + 0.4f * aw * if (h > 0) 1 else -1
     }
 }
 

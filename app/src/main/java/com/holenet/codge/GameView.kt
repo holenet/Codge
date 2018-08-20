@@ -5,9 +5,7 @@ import android.content.Context
 import android.graphics.*
 import android.support.v4.content.ContextCompat
 import android.view.SurfaceView
-import kotlin.math.atan2
-import kotlin.math.max
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 @SuppressLint("ViewConstructor")
 class GameView(context: Context, private val outerRadius: Int): SurfaceView(context), Runnable {
@@ -19,7 +17,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         const val PREPARE_ANIM_TIME = GameActivity.UI_ANIM_TIME
 
         enum class GameMode {
-            READY, PREPARING, PLAYING, GAME_OVER
+            READY, PREPARING, PLAYING
         }
     }
 
@@ -57,6 +55,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private val pref = context.getSharedPreferences("score", 0)
     private val prefKeyBaseScore = context.getString(R.string.pref_best_score)
     private var bestScore = pref.getInt(prefKeyBaseScore, 0)
+    private var score = 0
 
     // callback
     var onPrepare = { dir: Direction -> }
@@ -76,6 +75,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     init {
         loadBitmaps()
         initialize(Direction.STP)
+        gameOver()
     }
 
     private fun loadBitmaps() {
@@ -96,6 +96,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     private fun initialize(dir: Direction) {
         gameTicks = 0
+        score = 0
 
         startDirection = null
         toTurn = false
@@ -162,6 +163,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
         onGameOver()
         with(pref.edit()) {
+            bestScore = max(bestScore, score)
             putInt(prefKeyBaseScore, bestScore)
             apply()
         }
@@ -180,10 +182,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     gameOver()
                 processInput()
 
-                if (gameMode == GameMode.PLAYING) {
-                    gameTicks++
-                    bestScore = max(bestScore, gameTicks)
-                }
+                gameTicks++
+                if (gameMode == GameMode.PLAYING)
+                    score++
                 update()
 
                 nextGameMillis += SKIP_MILLIS
@@ -200,22 +201,28 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             flagGameStart = true
         }
 
-        if (gameMode == GameMode.PLAYING) {
-            while (balls.size < MAX_BALLS_NUM && balls.size - 2 < gameTicks / 250) {
-                var count = 0
-                while (true) {
-                    val theta = (Math.random() * 360 - 180).toFloat()
-                    if (theta diff player.theta < 110)
-                        continue
-                    val ball = BouncingBall(theta, 0f)
-                    val vector = atan2(player.y - ball.y, player.x - ball.x).toDouble().toDegree()
-                    count++
-                    if ((theta inc 180f) diff vector < 10 && count < 10)
-                        continue
-                    ball.vector = vector
-                    balls.add(ball)
-                    break
-                }
+        fun addNewBall() {
+            var count = 0
+            while (true) {
+                val theta = (Math.random() * 360 - 180).toFloat()
+                if (theta diff player.theta < 110)
+                    continue
+                val ball = BouncingBall(theta, 0f)
+                val vector = atan2(player.y - ball.y, player.x - ball.x).toDouble().toDegree()
+                count++
+                if ((theta inc 180f) diff vector < 10 && count < 10)
+                    continue
+                ball.vector = vector
+                balls.add(ball)
+                break
+            }
+        }
+
+        if (gameMode == GameMode.PLAYING || gameMode == GameMode.READY) {
+            if (gameTicks % 250 == 0) {
+                addNewBall()
+                if (balls.size > MAX_BALLS_NUM)
+                    balls.removeAt(2)
             }
         }
 
@@ -224,7 +231,32 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
             if (gameMode == GameMode.PLAYING && Model.intersects(player, ball)) {
                 flagGameOver = true
-                return
+                break
+            }
+        }
+
+        for (ball in balls) {
+            if (Model.intersects(player, ball)) {
+                // update velocity
+                val dx = player.x - ball.x
+                val dy = player.y - ball.y
+                val n = hypot(dx, dy)
+                if (n == 0f) continue
+                val ex = dx / n
+                val ey = dy / n
+                val a = Model.SPEED_LIMIT * 0.8f * E.toFloat().pow(-n / (player.r + ball.r) * E.toFloat())
+                player.vx += a * ex
+                player.vy += a * ey
+
+               // update w
+                val vx = player.vx - ball.vx
+                val vy = player.vy - ball.vy
+                val nn = n * n
+                val vhx = vx - (dx * dx / nn * vx + dx * dy / nn * vy)
+                val vhy = vy - (dx * dy / nn * vy + dy * dy / nn * vy)
+                val aw = (hypot(vhx, vhy) / E.toFloat().pow(-n / (player.r + ball.r) * E.toFloat()) * 180 / PI).toFloat()
+                val h = dy * vhx - dx * vhy
+                player.w = 0.8f * player.w + 0.2f * aw * if (h > 0) -1 else 1
             }
         }
     }
@@ -243,7 +275,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
                 if (!firstPlay) {
                     // draw time
-                    val time = "%.2f".format(gameTicks * SKIP_MILLIS / 1000f)
+                    val time = "%.2f".format(score * SKIP_MILLIS / 1000f)
                     paint.color = Color.BLACK
                     paint.textSize = innerRadius / 5
                     val timeHeight = paint.textHeight
@@ -260,7 +292,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 // draw player
                 save()
                 translate(innerRadius * player.x, innerRadius * player.y)
-                rotate(-player.theta / Player.RADIUS_SCALE)
+                rotate(player.angle)
                 drawBitmap(playerBitmap, -playerBitmap.width / 2f, -playerBitmap.height / 2f, null)
                 restore()
 
