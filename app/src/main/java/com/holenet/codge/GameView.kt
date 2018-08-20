@@ -133,6 +133,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     private fun gameOver() {
         flagGameOver = false
+        startDirection = null
+        toTurn = false
+        toJump = false
         onGameOver()
         with(pref.edit()) {
             putInt(prefKeyBaseScore, bestScore)
@@ -198,6 +201,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     val Paint.textHeight get() = fontMetrics.descent - fontMetrics.ascent
     private fun draw() {
+        holder.setFormat(PixelFormat.RGBA_8888)
         if (holder.surface.isValid) {
             with (holder.lockCanvas()) {
                 drawColor(backgroundColor)
