@@ -107,9 +107,11 @@ class GameActivity : AppCompatActivity() {
                     }
                     bTjump.setOnTouchListener { v, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
-                            toJump = true
+                            if (toJumpOff) toJumpOff = false
+                            toJumpOn = true
                         } else if (event.action == MotionEvent.ACTION_UP) {
-                            toJump = false
+                            if (toJumpOn) toJumpOn = false
+                            toJumpOff = true
                         }
                         true
                     }

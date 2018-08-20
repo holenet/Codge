@@ -33,7 +33,8 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     // input variables
     var startDirection: Direction? = null
     var toTurn: Boolean = false
-    var toJump: Boolean = false
+    var toJumpOn: Boolean = false
+    var toJumpOff: Boolean = false
 
     // models
     private val player = Player()
@@ -100,7 +101,8 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
         startDirection = null
         toTurn = false
-        toJump = false
+        toJumpOn = false
+        toJumpOff = false
 
         player.initialize(dir)
 
@@ -130,7 +132,16 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     onPlayerTurn(player.dir)
                 }
 
-                player.jumping = toJump
+                val toJumpOff = toJumpOff
+                this.toJumpOff = false
+                if (toJumpOff) {
+                    player.jumping = false
+                }
+                val toJumpOn = toJumpOn
+                this.toJumpOn = false
+                if (toJumpOn) {
+                    player.jumping = true
+                }
             }
         }
     }
