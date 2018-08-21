@@ -28,7 +28,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var flagGameStart = false
     private var gameTicks = 0
     private var gameThread: Thread? = null
-    private var firstPlay = true
+    var firstPlay = true; private set
 
     // input variables
     var startDirection: Direction? = null

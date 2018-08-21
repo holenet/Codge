@@ -44,6 +44,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <ImageView
+            android:id="@+id/iVtitle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:adjustViewBounds="false"
+            android:scaleType="centerInside"
+            android:scaleX="1.15"
+            android:scaleY="1.15"
+            app:layout_constraintBottom_toTopOf="@+id/cLcontrol"
+            app:layout_constraintEnd_toStartOf="@+id/guideline3"
+            app:layout_constraintStart_toStartOf="@+id/guideline4"
+            app:layout_constraintTop_toTopOf="@+id/frameLayout2"
+            app:srcCompat="@drawable/title" />
+
         <FrameLayout
             android:id="@+id/fLfade"
             android:layout_width="0dp"

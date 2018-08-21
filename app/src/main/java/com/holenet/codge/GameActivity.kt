@@ -140,9 +140,12 @@ class GameActivity : AppCompatActivity() {
         }
 
         // basic animation setting
-        val animTIme = UI_ANIM_TIME
+        val animTime = UI_ANIM_TIME
         if (anim?.isRunning == true) anim?.cancel()
         ValueAnimator.setFrameDelay(24)
+
+        if (gameView?.firstPlay == true && onPlay)
+            iVtitle.animate().translationY(-iVtitle.height.toFloat()).withLayer().setDuration(animTime.toLong()).start()
 
         // save some properties
         val smallWidth = bTscore.width
@@ -153,7 +156,7 @@ class GameActivity : AppCompatActivity() {
         setLayerType(View.LAYER_TYPE_HARDWARE)
 
         with (ValueAnimator.ofFloat(currentValue, if (onPlay) 1f else 0f)) {
-            duration = (animTIme * abs(currentValue - if (onPlay) 1f else 0f)).toLong()
+            duration = (animTime * abs(currentValue - if (onPlay) 1f else 0f)).toLong()
             addUpdateListener {
                 val value = it.animatedValue as Float
                 currentValue = value
