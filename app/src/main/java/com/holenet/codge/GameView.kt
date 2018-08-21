@@ -192,6 +192,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     override fun run() {
         var nextGameMillis = System.currentTimeMillis()
+        var lastDrawTick = gameTicks - 1
 
         while (running) {
             var loops = 0
@@ -212,7 +213,10 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 loops++
             }
 
-            draw()
+            if (lastDrawTick != gameTicks) {
+                lastDrawTick = gameTicks
+                draw()
+            }
         }
     }
 
