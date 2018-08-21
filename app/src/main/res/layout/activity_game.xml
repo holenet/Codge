@@ -4,158 +4,198 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
     tools:context=".GameActivity">
 
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.828417" />
-
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.17155" />
-
-    <ImageButton
-        android:id="@+id/bTscore"
-        style="@style/ImageButtonStyleSmall"
+    <FrameLayout
+        android:id="@+id/fLbackground"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:contentDescription="score"
-        android:elevation="1dp"
-        android:padding="4dp"
-        android:src="@drawable/button_trophy"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toStartOf="@+id/guideline4"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageButton
-        android:id="@+id/bTcolor"
-        style="@style/ImageButtonStyleSmall"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:contentDescription="color"
-        android:elevation="1dp"
-        android:padding="4dp"
-        android:src="@drawable/button_color"
-        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline3"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/iVbackground"
+            android:layout_width="match_parent"
+            android:layout_height="10000dp"
+            android:scaleType="fitStart"
+            tools:src="@drawable/background" />
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/fLgame"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
     </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/fLfade"
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/cLUI"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/background"
         android:elevation="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="gone">
+        app:layout_constraintTop_toTopOf="parent">
 
-    </FrameLayout>
+        <FrameLayout
+            android:id="@+id/fLfade"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/background"
+            android:elevation="2dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="gone">
 
-    <android.support.constraint.ConstraintLayout
-        android:id="@+id/cLcontrol"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/fLgame">
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/frameLayout2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </FrameLayout>
 
         <android.support.constraint.Guideline
-            android:id="@+id/guideline5"
+            android:id="@+id/guideline4"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.5" />
+            app:layout_constraintGuide_percent="0.17155" />
 
         <ImageButton
-            android:id="@+id/bTleft"
-            style="@style/ImageButtonStyle"
+            android:id="@+id/bTscore"
+            style="@style/ImageButtonStyleSmall"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="left"
-            android:padding="8dp"
-            android:src="@drawable/button_left"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/guideline5"
+            android:contentDescription="score"
+            android:elevation="1dp"
+            android:padding="4dp"
+            android:src="@drawable/button_trophy"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@+id/guideline4"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageButton
-            android:id="@+id/bTccw"
-            style="@style/ImageButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:contentDescription="ccw"
-            android:padding="8dp"
-            android:src="@drawable/button_ccw"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/guideline5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <android.support.constraint.Guideline
+            android:id="@+id/guideline3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.828417" />
 
         <ImageButton
-            android:id="@+id/bTcw"
-            style="@style/ImageButtonStyle"
+            android:id="@+id/bTcolor"
+            style="@style/ImageButtonStyleSmall"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="cw"
-            android:padding="8dp"
-            android:src="@drawable/button_cw"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/guideline5"
-            app:layout_constraintStart_toStartOf="parent"
+            android:contentDescription="color"
+            android:elevation="1dp"
+            android:padding="4dp"
+            android:src="@drawable/button_color"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/guideline3"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageButton
-            android:id="@+id/bTright"
-            style="@style/ImageButtonStyle"
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/cLcontrol"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="right"
-            android:padding="8dp"
-            android:src="@drawable/button_right"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/guideline5"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/frameLayout2">
 
-        <ImageButton
-            android:id="@+id/bTjump"
-            style="@style/ImageButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:contentDescription="jump"
-            android:padding="8dp"
-            android:src="@drawable/button_up"
-            android:translationY="10000dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/guideline5"
-            app:layout_constraintTop_toTopOf="parent" />
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.5" />
+
+            <ImageButton
+                android:id="@+id/bTleft"
+                style="@style/ImageButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="left"
+                android:padding="8dp"
+                android:src="@drawable/button_left"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/bTccw"
+                style="@style/ImageButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="ccw"
+                android:padding="8dp"
+                android:src="@drawable/button_ccw"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/bTcw"
+                style="@style/ImageButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="cw"
+                android:padding="8dp"
+                android:src="@drawable/button_cw"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/bTright"
+                style="@style/ImageButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="right"
+                android:padding="8dp"
+                android:src="@drawable/button_right"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline5"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/bTjump"
+                style="@style/ImageButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="jump"
+                android:padding="8dp"
+                android:src="@drawable/button_up"
+                android:text="Jump"
+                android:translationY="10000dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline5"
+                app:layout_constraintTop_toTopOf="parent" />
+        </android.support.constraint.ConstraintLayout>
     </android.support.constraint.ConstraintLayout>
+
 </android.support.constraint.ConstraintLayout>

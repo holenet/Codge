@@ -41,10 +41,11 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private val balls = ArrayList<Ball>()
 
     // bitmaps
+    private var backgroundBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     private var playerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
 
     // drawing
-    private var innerRadius = outerRadius.toFloat()
+    private var innerRadius = outerRadius * 0.9509259f
     private val paint = Paint().apply {
         textAlign = Paint.Align.CENTER
         style = Paint.Style.FILL
@@ -74,12 +75,20 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     init {
+        holder.setFormat(PixelFormat.RGBA_8888)
         loadBitmaps()
         initialize(Direction.STP)
         gameOver()
     }
 
     private fun loadBitmaps() {
+        // background
+        val opt = BitmapFactory.Options().apply { inSampleSize = 2 }
+        val backgroundBitmapRaw = BitmapFactory.decodeResource(resources, R.drawable.background, opt)
+        backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmapRaw, outerRadius * 2, (outerRadius * 2f / backgroundBitmapRaw.width * backgroundBitmapRaw.height).roundToInt(), true)
+        backgroundBitmapRaw.recycle()
+
+        // player
         val playerRadius = innerRadius * Player.RADIUS_SCALE
         val playerColorBase = 0xFF333333.toInt()
         val playerColorDeco = 0xFFFFCC33.toInt()
@@ -92,6 +101,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             drawBitmap(decoBitmap, Rect(0, 0, decoBitmap.width, decoBitmap.height), Rect(-1, -1, 1, 1), Paint().apply {
                 colorFilter = PorterDuffColorFilter(playerColorDeco, PorterDuff.Mode.SRC_IN)
             })
+            decoBitmap.recycle()
         }
     }
 
@@ -273,31 +283,29 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     val Paint.textHeight get() = fontMetrics.descent - fontMetrics.ascent
+    val timeFormat = "%.2f"
+    val bestTimeFormat = "Best %.2f"
     private fun draw() {
-        holder.setFormat(PixelFormat.RGBA_8888)
         if (holder.surface.isValid) {
             with (holder.lockCanvas()) {
-                drawColor(backgroundColor)
+                // draw background
+                drawBitmap(backgroundBitmap, 0f, 0f, null)
 
                 save()
                 translate(outerRadius.toFloat(), outerRadius.toFloat())
-                paint.color = 0xFFF2F2F2.toInt()
-                drawCircle(0f, 0f, innerRadius, paint)
 
                 if (!firstPlay) {
                     // draw time
-                    val time = "%.2f".format(score * SKIP_MILLIS / 1000f)
+                    val time = timeFormat.format(score * SKIP_MILLIS / 1000f)
                     paint.color = Color.BLACK
                     paint.textSize = innerRadius / 5
                     val timeHeight = paint.textHeight
-                    drawText(time, 0f, 0f, paint)
+                    drawText(time, 0f, +timeHeight / 2, paint)
 
                     // draw bestTime
-                    var bestTime = "%.2f".format(bestScore * SKIP_MILLIS / 1000f)
-                    if (gameMode != GameMode.PLAYING)
-                        bestTime = "Best $bestTime"
+                    val bestTime = (if (gameMode == GameMode.PLAYING) timeFormat else bestTimeFormat).format(bestScore * SKIP_MILLIS / 1000f)
                     paint.textSize = innerRadius / 10
-                    drawText(bestTime, 0f, -timeHeight, paint)
+                    drawText(bestTime, 0f, -timeHeight / 2, paint)
                 }
 
                 // draw player
@@ -324,7 +332,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 }
                 nextFPS++
                 paintFPS.textSize = outerRadius / 6f
-                drawText("$currentFPS", outerRadius * 1.95f, outerRadius * 2 - paint.fontMetrics.bottom, paintFPS)
+                drawText("$currentFPS", outerRadius * 1.95f, outerRadius * 2 - paintFPS.fontMetrics.bottom, paintFPS)
 
                 holder.unlockCanvasAndPost(this)
             }
