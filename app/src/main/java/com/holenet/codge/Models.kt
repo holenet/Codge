@@ -182,19 +182,19 @@ class Player : Model {
             JumpMode.LANDED -> {
                 if (jumping) {
                     jumpMode = JumpMode.JUMPING
+                    verticalSpeed = VERTICAL_SPEED_LIMIT
                 }
             }
             JumpMode.JUMPING -> {
-                verticalSpeed= VERTICAL_SPEED_LIMIT
-                height += verticalSpeed
+                verticalSpeed = VERTICAL_SPEED_LIMIT
                 if (!jumping)
                     jumpMode = JumpMode.FALLING
             }
             JumpMode.FALLING -> {
                 verticalSpeed -= VERTICAL_ACC_DEFAULT
-                height += verticalSpeed
             }
         }
+        height += verticalSpeed
         // Flipping
         if (height > 1 - r) {
             theta = theta inc 180f

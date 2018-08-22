@@ -110,7 +110,6 @@ class GameActivity : AppCompatActivity() {
                             if (toJumpOff) toJumpOff = false
                             toJumpOn = true
                         } else if (event.action == MotionEvent.ACTION_UP) {
-                            if (toJumpOn) toJumpOn = false
                             toJumpOff = true
                         }
                         true

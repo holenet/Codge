@@ -142,15 +142,16 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     onPlayerTurn(player.dir)
                 }
 
-                val toJumpOff = toJumpOff
-                this.toJumpOff = false
-                if (toJumpOff) {
-                    player.jumping = false
-                }
                 val toJumpOn = toJumpOn
                 this.toJumpOn = false
                 if (toJumpOn) {
                     player.jumping = true
+                } else {
+                    val toJumpOff = toJumpOff
+                    this.toJumpOff = false
+                    if (toJumpOff) {
+                        player.jumping = false
+                    }
                 }
             }
         }
