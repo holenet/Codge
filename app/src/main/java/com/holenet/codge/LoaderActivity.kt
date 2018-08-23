@@ -6,7 +6,9 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import kotlinx.android.synthetic.main.activity_loader.*
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 
 class LoaderActivity : AppCompatActivity() {
     companion object {
@@ -24,8 +26,12 @@ class LoaderActivity : AppCompatActivity() {
         with (ValueAnimator.ofInt(0, ANIM_TIME)) {
             duration = ANIM_TIME.toLong()
             addUpdateListener {
-                val value = it.animatedValue as Int
-                iVlogo.alpha = (ANIM_TIME / 2f - abs(value - ANIM_TIME / 2f)) / FADE_TIME
+                val time = it.animatedValue as Int
+                val symTime = ANIM_TIME / 2 - abs(time - ANIM_TIME / 2)
+                iVlogo.alpha = if (symTime < FADE_TIME) 0.5f - 0.5f * cos(symTime * PI / FADE_TIME).toFloat() else 1f
+                val scale = if (time < ANIM_TIME / 2) 1f - 0.03f * (1 + cos(symTime * 2 * PI / ANIM_TIME)).toFloat() else 1f
+                iVlogo.scaleX = scale
+                iVlogo.scaleY = scale
             }
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationEnd(animation: Animator?) {
