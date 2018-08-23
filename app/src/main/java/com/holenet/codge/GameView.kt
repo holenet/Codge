@@ -205,10 +205,10 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     gameOver()
                 processInput()
 
+                gameTicks++
                 if (gameMode == GameMode.PLAYING)
                     score++
                 update()
-                gameTicks++
 
                 nextGameMillis += SKIP_MILLIS
                 loops++
@@ -222,6 +222,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     private fun update() {
+        // player update
         player.update()
         if (gameMode == GameMode.PREPARING && player.anim == null) {
             flagGameStart = true
@@ -244,14 +245,16 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             }
         }
 
+        // create new ball
         if (gameMode == GameMode.PLAYING || gameMode == GameMode.READY) {
-            if (gameTicks % 500 == 0) {
+            if (gameTicks == 250 || gameTicks % 500 == 0) {
                 addNewBall()
                 if (balls.size > MAX_BALLS_NUM)
                     balls.removeAt(2)
             }
         }
 
+        // ball update
         for (ball in balls) {
             ball.update()
 
@@ -261,6 +264,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             }
         }
 
+        // free physics
         for (ball in balls) {
             if (Model.intersects(player, ball)) {
                 // update velocity
