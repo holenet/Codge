@@ -3,8 +3,11 @@ package com.holenet.codge
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.os.Handler
+import android.os.Looper
 import android.support.v4.content.ContextCompat
 import android.view.SurfaceView
+import android.widget.Toast
 import kotlin.math.*
 
 @SuppressLint("ViewConstructor")
@@ -64,6 +67,12 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     var onGameOver = {}
     var onPlayerTurn = {dir: Direction -> }
 
+    // hidden spinning
+    private var haveTurned = false
+    private var spinningDirection = Direction.STP
+    private var spinningSpeed = 0f
+    private var canvasRotation = 0f
+
     // calculate fps
     // NOTE: This is for development environment, should be erased on the production releases
     private var currentFPS = 0
@@ -119,6 +128,10 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         balls.clear()
         balls.add(RevolvingBall(-90f, Direction.CCW))
         balls.add(RevolvingBall(-90f, Direction.CW))
+
+        haveTurned = false
+        spinningDirection = Direction.STP
+        canvasRotation = 0f
     }
 
     fun updateColoring() {
@@ -140,6 +153,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 if (toTurn) {
                     player.turn()
                     onPlayerTurn(player.dir)
+                    haveTurned = true
                 }
 
                 val toJumpOn = toJumpOn
@@ -222,6 +236,13 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     private fun update() {
+        // spinning
+        if (gameMode == GameMode.PLAYING && gameTicks == 30 * 1000 / SKIP_MILLIS && !haveTurned) {
+            Handler(Looper.getMainLooper()).post { Toast.makeText(context, "Do You Love Spinning?", Toast.LENGTH_LONG).show(); }
+            spinningDirection = player.dir
+            spinningSpeed = spinningDirection.rotation * 1.8f
+        }
+
         // player update
         player.update()
         if (gameMode == GameMode.PREPARING && player.anim == null) {
@@ -302,6 +323,20 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
                 save()
                 translate(outerRadius.toFloat(), outerRadius.toFloat())
+
+                // spinning
+                if (spinningDirection != Direction.STP) {
+                    if (Math.random() < 0.03) {
+                        spinningDirection = if (spinningDirection == Direction.CCW) Direction.CW else Direction.CCW
+                    } else {
+                        spinningSpeed += spinningDirection.rotation * 0.05f
+                        if (abs(spinningSpeed) > 1.8f) {
+                            spinningSpeed = spinningSpeed.sign * 1.8f
+                        }
+                    }
+                    canvasRotation = canvasRotation inc spinningSpeed
+                    rotate(canvasRotation)
+                }
 
                 if (!firstPlay) {
                     // draw time
