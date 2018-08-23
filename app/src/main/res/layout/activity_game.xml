@@ -95,14 +95,14 @@
             app:layout_constraintGuide_percent="0.828417" />
 
         <ImageButton
-            android:id="@+id/bTcolor"
+            android:id="@+id/bTcostum"
             style="@style/ImageButtonStyleSmall"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="color"
+            android:contentDescription="costum"
             android:elevation="1dp"
             android:padding="4dp"
-            android:src="@drawable/button_color"
+            android:src="@drawable/button_custom"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guideline3"

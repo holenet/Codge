@@ -18,7 +18,7 @@ class GameActivity : AppCompatActivity() {
     }
     var gameView: GameView? = null
 
-    var colorX = 0f
+    var costumX = 0f
     var rightX = 0f
     var smallWidth = 0
     var bigWidth = 0
@@ -67,7 +67,7 @@ class GameActivity : AppCompatActivity() {
                 fLgame.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                 // save some properties for UI animation
-                colorX = bTcolor.x
+                costumX = bTcostum.x
                 rightX = bTright.x
                 smallWidth = bTscore.width
                 bigWidth = cLcontrol.width / 2
@@ -127,7 +127,7 @@ class GameActivity : AppCompatActivity() {
                     }
 
                     // buttons custom
-                    bTcolor.setOnClickListener {
+                    bTcostum.setOnClickListener {
                         changeCustomMode(true)
                     }
 
@@ -161,7 +161,7 @@ class GameActivity : AppCompatActivity() {
         if (gameView?.firstPlay == true && onPlay)
             iVtitle.animate().translationY(-iVtitle.height.toFloat()).withLayer().setDuration(UI_ANIM_TIME.toLong()).start()
 
-        val views = arrayOf(bTscore, bTcolor, bTleft, bTccw, bTcw, bTright, bTjump)
+        val views = arrayOf(bTscore, bTcostum, bTleft, bTccw, bTcw, bTright, bTjump)
 
         ValueAnimator.ofFloat(currentGameValue, if (onPlay) 1f else 0f).apply {
             duration = (UI_ANIM_TIME * abs(currentGameValue - if (onPlay) 1f else 0f)).toLong()
@@ -171,7 +171,7 @@ class GameActivity : AppCompatActivity() {
                 val invertedValue = 1f - value
 
                 bTscore.x = -smallWidth * value
-                bTcolor.x = colorX + smallWidth * value
+                bTcostum.x = costumX + smallWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX + bigWidth * value
 
@@ -180,9 +180,9 @@ class GameActivity : AppCompatActivity() {
                 bTjump.y = bigHeight * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTscore, bTcolor) }
-                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcolor) }
-                override fun onAnimationCancel(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcolor) }
+                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTscore, bTcostum) }
+                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcostum) }
+                override fun onAnimationCancel(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcostum) }
                 override fun onAnimationRepeat(animation: Animator?) {}
             })
             gameAnim = this
@@ -194,7 +194,7 @@ class GameActivity : AppCompatActivity() {
     private fun changeCustomMode(onCustom: Boolean) {
         if (customAnim?.isRunning == true) customAnim?.cancel()
 
-        val views = arrayOf(bTscore, bTcolor, bTleft, bTright)
+        val views = arrayOf(bTscore, bTcostum, bTleft, bTright)
 
         ValueAnimator.ofFloat(currentCustomValue, if (onCustom) 1f else 0f).apply {
             duration = (UI_ANIM_TIME * abs(currentCustomValue - if (onCustom) 1f else 0f)).toLong()
@@ -204,7 +204,7 @@ class GameActivity : AppCompatActivity() {
                 val invertedValue = 1f - value
 
                 bTscore.x = -smallWidth * value
-                bTcolor.x = colorX - entireWidth * value
+                bTcostum.x = costumX - entireWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX - entireWidth * value
             }
