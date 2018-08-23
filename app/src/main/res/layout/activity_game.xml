@@ -7,23 +7,6 @@
     tools:context=".GameActivity">
 
     <FrameLayout
-        android:id="@+id/fLbackground"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/iVbackground"
-            android:layout_width="match_parent"
-            android:layout_height="10000dp"
-            android:scaleType="fitStart"
-            tools:src="@drawable/background" />
-    </FrameLayout>
-
-    <FrameLayout
         android:id="@+id/fLgame"
         android:layout_width="0dp"
         android:layout_height="0dp"

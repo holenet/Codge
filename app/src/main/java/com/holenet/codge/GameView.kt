@@ -319,6 +319,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         if (holder.surface.isValid) {
             with (holder.lockCanvas()) {
                 // draw background
+                drawColor(backgroundColor)
                 drawBitmap(backgroundBitmap, 0f, 0f, null)
 
                 save()
