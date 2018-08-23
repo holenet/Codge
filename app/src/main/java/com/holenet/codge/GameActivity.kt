@@ -18,6 +18,13 @@ class GameActivity : AppCompatActivity() {
     }
     var gameView: GameView? = null
 
+    var colorX = 0f
+    var rightX = 0f
+    var smallWidth = 0
+    var bigWidth = 0
+    var bigHeight = 0
+    var entireWidth = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -41,11 +48,11 @@ class GameActivity : AppCompatActivity() {
         val onPrepareHandler = Handler {
             (if (it.what == Direction.CW.rotation) bTccw else bTcw).visibility = View.INVISIBLE
             (if (it.what == Direction.CCW.rotation) bTccw else bTcw).visibility = View.VISIBLE
-            changeMode(true)
+            changeGameMode(true)
             true
         }
         val onGameOverHandler = Handler {
-            changeMode(false)
+            changeGameMode(false)
             true
         }
         val onPlayerTurnHandler = Handler {
@@ -62,6 +69,10 @@ class GameActivity : AppCompatActivity() {
                 // save some properties for UI animation
                 colorX = bTcolor.x
                 rightX = bTright.x
+                smallWidth = bTscore.width
+                bigWidth = cLcontrol.width / 2
+                bigHeight = cLcontrol.height
+                entireWidth = fLgame.width
 
                 with(GameView(this@GameActivity, fLgame.width / 2)) {
                     gameView = this
@@ -115,6 +126,11 @@ class GameActivity : AppCompatActivity() {
                         true
                     }
 
+                    // buttons custom
+                    bTcolor.setOnClickListener {
+                        changeCustomMode(true)
+                    }
+
                     // start
                     onResume()
                 }
@@ -122,62 +138,84 @@ class GameActivity : AppCompatActivity() {
         })
     }
 
-    var anim: ValueAnimator? = null
-    private var currentValue = 0f
-    var colorX = 0f
-    var rightX = 0f
-    private fun changeMode(onPlay: Boolean) {
-        // for hardware acceleration
-        fun setLayerType(type: Int) {
-            bTscore.setLayerType(type, null)
-            bTcolor.setLayerType(type, null)
-            bTleft.setLayerType(type, null)
-            bTccw.setLayerType(type, null)
-            bTcw.setLayerType(type, null)
-            bTright.setLayerType(type, null)
-            bTjump.setLayerType(type, null)
-        }
+    fun turnOnHardwareAcceleration(vararg views: View) {
+        for (view in views) view.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+    }
+    fun turnOffHardwareAcceleration(vararg views: View) {
+        for (view in views) view.setLayerType(View.LAYER_TYPE_NONE, null)
+    }
 
-        // basic animation setting
-        val animTime = UI_ANIM_TIME
-        if (anim?.isRunning == true) anim?.cancel()
-        ValueAnimator.setFrameDelay(24)
+    fun lockButtons(vararg buttons: View) {
+        for (button in buttons) button.isEnabled = false
+    }
+    fun unlockButtons(vararg buttons: View) {
+        for (button in buttons) button.isEnabled = true
+    }
 
+    private var gameAnim: ValueAnimator? = null
+    private var currentGameValue = 0f
+    private fun changeGameMode(onPlay: Boolean) {
+        if (gameAnim?.isRunning == true) gameAnim?.cancel()
+
+        // title animation (only for the first play)
         if (gameView?.firstPlay == true && onPlay)
-            iVtitle.animate().translationY(-iVtitle.height.toFloat()).withLayer().setDuration(animTime.toLong()).start()
+            iVtitle.animate().translationY(-iVtitle.height.toFloat()).withLayer().setDuration(UI_ANIM_TIME.toLong()).start()
 
-        // save some properties
-        val smallWidth = bTscore.width
-        val bigWidth = cLcontrol.width / 2
-        val bigHeight = cLcontrol.height
+        val views = arrayOf(bTscore, bTcolor, bTleft, bTccw, bTcw, bTright, bTjump)
 
-        // hardware acceleration turn on
-        setLayerType(View.LAYER_TYPE_HARDWARE)
-
-        with (ValueAnimator.ofFloat(currentValue, if (onPlay) 1f else 0f)) {
-            duration = (animTime * abs(currentValue - if (onPlay) 1f else 0f)).toLong()
+        ValueAnimator.ofFloat(currentGameValue, if (onPlay) 1f else 0f).apply {
+            duration = (UI_ANIM_TIME * abs(currentGameValue - if (onPlay) 1f else 0f)).toLong()
             addUpdateListener {
                 val value = it.animatedValue as Float
-                currentValue = value
+                currentGameValue = value
                 val invertedValue = 1f - value
+
                 bTscore.x = -smallWidth * value
                 bTcolor.x = colorX + smallWidth * value
                 bTleft.x = -bigWidth * value
+                bTright.x = rightX + bigWidth * value
+
                 bTccw.y = bigHeight * invertedValue
                 bTcw.y = bigHeight * invertedValue
-                bTright.x = rightX + bigWidth * value
                 bTjump.y = bigHeight * invertedValue
             }
-            // hardware acceleration turn off
             addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTscore, bTcolor) }
+                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcolor) }
+                override fun onAnimationCancel(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcolor) }
                 override fun onAnimationRepeat(animation: Animator?) {}
-                override fun onAnimationEnd(animation: Animator?) { setLayerType(View.LAYER_TYPE_NONE) }
-                override fun onAnimationCancel(animation: Animator?) { setLayerType(View.LAYER_TYPE_NONE) }
-                override fun onAnimationStart(animation: Animator?) {}
             })
-            start()
-            anim = this
-        }
+            gameAnim = this
+        }.start()
+    }
+
+    private var customAnim: ValueAnimator? = null
+    private var currentCustomValue = 0f
+    private fun changeCustomMode(onCustom: Boolean) {
+        if (customAnim?.isRunning == true) customAnim?.cancel()
+
+        val views = arrayOf(bTscore, bTcolor, bTleft, bTright)
+
+        ValueAnimator.ofFloat(currentCustomValue, if (onCustom) 1f else 0f).apply {
+            duration = (UI_ANIM_TIME * abs(currentCustomValue - if (onCustom) 1f else 0f)).toLong()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+                currentCustomValue = value
+                val invertedValue = 1f - value
+
+                bTscore.x = -smallWidth * value
+                bTcolor.x = colorX - entireWidth * value
+                bTleft.x = -bigWidth * value
+                bTright.x = rightX - entireWidth * value
+            }
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTleft, bTright) }
+                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTleft, bTright) }
+                override fun onAnimationCancel(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTleft, bTright) }
+                override fun onAnimationRepeat(animation: Animator?) {}
+            })
+            customAnim = this
+        }.start()
     }
 
     override fun onPause() {
