@@ -205,10 +205,10 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     gameOver()
                 processInput()
 
-                gameTicks++
                 if (gameMode == GameMode.PLAYING)
                     score++
                 update()
+                gameTicks++
 
                 nextGameMillis += SKIP_MILLIS
                 loops++
@@ -245,7 +245,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         }
 
         if (gameMode == GameMode.PLAYING || gameMode == GameMode.READY) {
-            if (gameTicks % 250 == 0) {
+            if (gameTicks % 500 == 0) {
                 addNewBall()
                 if (balls.size > MAX_BALLS_NUM)
                     balls.removeAt(2)

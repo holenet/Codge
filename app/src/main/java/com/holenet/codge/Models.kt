@@ -73,7 +73,7 @@ class Player : Model {
     companion object {
         const val RADIUS_SCALE = 0.1f
         const val ACC_DEFAULT = 0.0017f
-        const val VERTICAL_SPEED_LIMIT = 0.03f
+        const val VERTICAL_SPEED_LIMIT = 0.028f
         const val VERTICAL_ACC_DEFAULT = 0.0027f
         const val SPEED_LIMIT_FREE = Model.SPEED_LIMIT * 2.0f
         const val DRAG_SCALE_DEFAULT = 0.99f
@@ -182,19 +182,19 @@ class Player : Model {
             JumpMode.LANDED -> {
                 if (jumping) {
                     jumpMode = JumpMode.JUMPING
-                    verticalSpeed = VERTICAL_SPEED_LIMIT
                 }
             }
             JumpMode.JUMPING -> {
                 verticalSpeed = VERTICAL_SPEED_LIMIT
                 if (!jumping)
                     jumpMode = JumpMode.FALLING
+                height += verticalSpeed
             }
             JumpMode.FALLING -> {
                 verticalSpeed -= VERTICAL_ACC_DEFAULT
+                height += verticalSpeed
             }
         }
-        height += verticalSpeed
         // Flipping
         if (height > 1 - r) {
             theta = theta inc 180f
