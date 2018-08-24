@@ -130,6 +130,9 @@ class GameActivity : AppCompatActivity() {
                     bTcostum.setOnClickListener {
                         changeCustomMode(true)
                     }
+                    bTback.setOnClickListener {
+                        changeCustomMode(false)
+                    }
 
                     // start
                     onResume()
@@ -168,13 +171,13 @@ class GameActivity : AppCompatActivity() {
             addUpdateListener {
                 val value = it.animatedValue as Float
                 currentGameValue = value
-                val invertedValue = 1f - value
 
                 bTscore.x = -smallWidth * value
                 bTcostum.x = costumX + smallWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX + bigWidth * value
 
+                val invertedValue = 1f - value
                 bTccw.y = bigHeight * invertedValue
                 bTcw.y = bigHeight * invertedValue
                 bTjump.y = bigHeight * invertedValue
@@ -201,12 +204,14 @@ class GameActivity : AppCompatActivity() {
             addUpdateListener {
                 val value = it.animatedValue as Float
                 currentCustomValue = value
-                val invertedValue = 1f - value
 
                 bTscore.x = -smallWidth * value
                 bTcostum.x = costumX - entireWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX - entireWidth * value
+
+                val invertedValue = 1f - value
+                bTback.x = (entireWidth + costumX) * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTleft, bTright) }
