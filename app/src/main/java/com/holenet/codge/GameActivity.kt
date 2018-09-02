@@ -2,14 +2,19 @@ package com.holenet.codge
 
 import android.animation.Animator
 import android.animation.ValueAnimator
+import android.content.Context
+import android.graphics.*
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewTreeObserver
+import android.support.v4.view.PagerAdapter
+import android.support.v7.widget.GridLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.view.*
+import android.widget.ImageView
 import kotlinx.android.synthetic.main.activity_game.*
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class GameActivity : AppCompatActivity() {
     companion object {
@@ -73,6 +78,10 @@ class GameActivity : AppCompatActivity() {
                 bigWidth = cLcontrol.width / 2
                 bigHeight = cLcontrol.height
                 entireWidth = fLgame.width
+
+                // customize view pager
+                vPcustom.adapter = ViewPagerAdapter(this@GameActivity)
+                vPcustom.overScrollMode = View.OVER_SCROLL_NEVER
 
                 with(GameView(this@GameActivity, fLgame.width / 2)) {
                     gameView = this
@@ -212,6 +221,7 @@ class GameActivity : AppCompatActivity() {
 
                 val invertedValue = 1f - value
                 bTback.x = (entireWidth + costumX) * invertedValue
+                cLcustom.x = entireWidth * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTleft, bTright) }
@@ -231,5 +241,63 @@ class GameActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         gameView?.onResume()
+    }
+
+    inner class ViewPagerAdapter(private val context: Context) : PagerAdapter() {
+        private val columnsNum = 5
+        private val eachWidth = ((vPcustom.width * 0.85f) / columnsNum).roundToInt()
+        private val imageFrame = BitmapFactory.decodeResource(context.resources, R.drawable.item_frame)
+
+        override fun instantiateItem(container: ViewGroup, position: Int): Any {
+            val view = LayoutInflater.from(context).inflate(R.layout.fragment_picker, container, false)
+            with (view.findViewById(R.id.rVpicker) as RecyclerView) {
+                layoutManager = GridLayoutManager(context, columnsNum)
+                adapter = RecyclerViewAdapter(context, eachWidth, imageFrame)
+                overScrollMode = View.OVER_SCROLL_NEVER
+            }
+            container.addView(view)
+            return view
+        }
+
+        override fun destroyItem(container: ViewGroup, position: Int, view: Any) {
+            container.removeView(view as View)
+        }
+
+        override fun isViewFromObject(view: View, `object`: Any): Boolean {
+            return view == `object`
+        }
+
+        override fun getCount(): Int {
+            return 3
+        }
+    }
+
+    class RecyclerViewAdapter(context: Context, private val eachWidth: Int, private val imageFrame: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
+        private val inflater = LayoutInflater.from(context)
+        private val colors = arrayOf(Color.CYAN, Color.YELLOW, Color.BLUE) // TODO: load from device storage
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            return ViewHolder(inflater.inflate(R.layout.item_picker, parent, false))
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.apply {
+                val imageBitmap = Bitmap.createBitmap(eachWidth, eachWidth, Bitmap.Config.ARGB_8888)
+                with (Canvas(imageBitmap)) {
+                    scale(0.9f, 0.9f, eachWidth / 2f, eachWidth / 2f)
+                    drawCircle(eachWidth / 2f, eachWidth / 2f, eachWidth / 2f, Paint().apply { color = colors[position] })
+                    drawBitmap(imageFrame, Rect(0, 0, imageFrame.width, imageFrame.height), Rect(0, 0, eachWidth, eachWidth), null)
+                }
+                iBitem.setImageBitmap(imageBitmap)
+            }
+        }
+
+        override fun getItemCount(): Int {
+            return colors.size
+        }
+
+        class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val iBitem : ImageView = itemView.findViewById(R.id.iBitem)
+        }
     }
 }
