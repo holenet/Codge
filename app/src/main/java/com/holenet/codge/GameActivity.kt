@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.support.v4.view.PagerAdapter
+import android.support.v4.view.ViewPager
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
@@ -80,8 +81,17 @@ class GameActivity : AppCompatActivity() {
                 entireWidth = fLgame.width
 
                 // customize view pager
-                vPcustom.adapter = ViewPagerAdapter(this@GameActivity)
-                vPcustom.overScrollMode = View.OVER_SCROLL_NEVER
+                with (vPcustom) {
+                    adapter = ViewPagerAdapter(this@GameActivity)
+                    overScrollMode = View.OVER_SCROLL_NEVER
+                    addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+                        override fun onPageScrollStateChanged(state: Int) {}
+                        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
+                        override fun onPageSelected(position: Int) {
+                            gameView?.highlightedType = positionToType(position)
+                        }
+                    })
+                }
 
                 with(GameView(this@GameActivity, fLgame.width / 2)) {
                     gameView = this
@@ -224,9 +234,16 @@ class GameActivity : AppCompatActivity() {
                 cLcustom.x = entireWidth * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTleft, bTright) }
-                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTleft, bTright) }
-                override fun onAnimationCancel(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTleft, bTright) }
+                override fun onAnimationStart(animation: Animator?) {
+                    turnOnHardwareAcceleration(*views)
+                    lockButtons(bTleft, bTright)
+                    if (onCustom)
+                        gameView?.highlightedType = positionToType(vPcustom.currentItem)
+                    else
+                        gameView?.highlightedType = null
+                }
+                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTleft, bTright); }
+                override fun onAnimationCancel(animation: Animator?) { onAnimationEnd(null) }
                 override fun onAnimationRepeat(animation: Animator?) {}
             })
             customAnim = this
@@ -243,16 +260,27 @@ class GameActivity : AppCompatActivity() {
         gameView?.onResume()
     }
 
+    fun positionToType(position: Int) = when (position) {
+        0 -> CustomManager.CustomType.PlayerBaseColor
+        1 -> CustomManager.CustomType.PlayerPatternColor
+        2 -> CustomManager.CustomType.BallColor
+        else -> CustomManager.CustomType.PlayerPatternShape
+    }
+
     inner class ViewPagerAdapter(private val context: Context) : PagerAdapter() {
         private val columnsNum = 5
         private val eachWidth = ((vPcustom.width * 0.85f) / columnsNum).roundToInt()
         private val imageFrame = BitmapFactory.decodeResource(context.resources, R.drawable.item_frame)
 
+        init {
+            CustomManager.loadColors(context)
+        }
+
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
             val view = LayoutInflater.from(context).inflate(R.layout.fragment_picker, container, false)
             with (view.findViewById(R.id.rVpicker) as RecyclerView) {
                 layoutManager = GridLayoutManager(context, columnsNum)
-                adapter = RecyclerViewAdapter(context, eachWidth, imageFrame)
+                adapter = RecyclerViewAdapter(context, positionToType(position), eachWidth, imageFrame)
                 overScrollMode = View.OVER_SCROLL_NEVER
             }
             container.addView(view)
@@ -272,9 +300,9 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    class RecyclerViewAdapter(context: Context, private val eachWidth: Int, private val imageFrame: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
+    class RecyclerViewAdapter(context: Context, val type: CustomManager.CustomType, private val eachWidth: Int, private val imageFrame: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
-        private val colors = arrayOf(Color.CYAN, Color.YELLOW, Color.BLUE) // TODO: load from device storage
+        private val colors: MutableList<Int> = CustomManager.getColors(type)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             return ViewHolder(inflater.inflate(R.layout.item_picker, parent, false))

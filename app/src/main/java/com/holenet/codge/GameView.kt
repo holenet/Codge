@@ -46,6 +46,8 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     // bitmaps
     private var backgroundBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     private var playerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+    private var playerBaseHighlightBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+    private var playerPatternHighlightBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
 
     // drawing
     private var innerRadius = outerRadius * 0.9509259f
@@ -72,6 +74,13 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var spinningDirection = Direction.STP
     private var spinningSpeed = 0f
     private var canvasRotation = 0f
+
+    // customization
+    var highlightedType: CustomManager.CustomType? = null
+    private val ballHighlightPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        color = Color.CYAN
+    }
 
     // calculate fps
     // NOTE: This is for development environment, should be erased on the production releases
@@ -101,16 +110,24 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         val playerRadius = innerRadius * Player.RADIUS_SCALE
         val playerColorBase = 0xFF333333.toInt()
         val playerColorDeco = 0xFFFFCC33.toInt()
+        val decoBitmap = BitmapFactory.decodeResource(resources, R.drawable.player_deco)
         playerBitmap = Bitmap.createBitmap((playerRadius * 2).roundToInt(), (playerRadius * 2).roundToInt(), Bitmap.Config.ARGB_8888)
         with (Canvas(playerBitmap)) {
             translate(playerRadius, playerRadius)
             scale(playerRadius, playerRadius)
             drawCircle(0f, 0f, 1f, Paint().apply { color = playerColorBase })
-            val decoBitmap = BitmapFactory.decodeResource(resources, R.drawable.player_deco)
             drawBitmap(decoBitmap, Rect(0, 0, decoBitmap.width, decoBitmap.height), Rect(-1, -1, 1, 1), Paint().apply {
                 colorFilter = PorterDuffColorFilter(playerColorDeco, PorterDuff.Mode.SRC_IN)
             })
             decoBitmap.recycle()
+        }
+        with (BitmapFactory.decodeResource(resources, R.drawable.player_base_highlight)) {
+            val baseHighlightSize = playerBitmap.width * this.width / decoBitmap.width
+            playerBaseHighlightBitmap = Bitmap.createScaledBitmap(this, baseHighlightSize, baseHighlightSize, true)
+        }
+        with (BitmapFactory.decodeResource(resources, R.drawable.player_pattern_highlight)) {
+            val patternHighlightSize = playerBitmap.width * this.width / decoBitmap.width
+            playerPatternHighlightBitmap = Bitmap.createScaledBitmap(this, patternHighlightSize, patternHighlightSize, true)
         }
     }
 
@@ -358,13 +375,22 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 translate(innerRadius * player.x, innerRadius * player.y)
                 rotate(player.angle)
                 drawBitmap(playerBitmap, -playerBitmap.width / 2f, -playerBitmap.height / 2f, null)
+                if (highlightedType == CustomManager.CustomType.PlayerBaseColor)
+                    drawBitmap(playerBaseHighlightBitmap, -playerBaseHighlightBitmap.width / 2f, -playerBaseHighlightBitmap.height / 2f, null)
+                if (highlightedType == CustomManager.CustomType.PlayerPatternColor || highlightedType == CustomManager.CustomType.PlayerPatternShape)
+                    drawBitmap(playerPatternHighlightBitmap, -playerPatternHighlightBitmap.width / 2f, -playerPatternHighlightBitmap.height / 2f, null)
                 restore()
 
                 // draw balls
                 paint.color = 0xFFF46700.toInt()
+                save()
+                scale(innerRadius, innerRadius)
                 for (ball in balls) {
-                    drawCircle(innerRadius * ball.x, innerRadius * ball.y, innerRadius * ball.r, paint)
+                    drawCircle(ball.x, ball.y, ball.r, paint)
+                    if (highlightedType == CustomManager.CustomType.BallColor)
+                        drawCircle(ball.x, ball.y, ball.r * 1.25f, ballHighlightPaint.apply { strokeWidth = ball.r * 0.5f })
                 }
+                restore()
 
                 restore()
                 // draw fps
