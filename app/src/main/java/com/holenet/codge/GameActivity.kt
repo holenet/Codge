@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
+import android.support.v7.app.AlertDialog
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
@@ -271,12 +272,13 @@ class GameActivity : AppCompatActivity() {
         private val columnsNum = 5
         private val eachWidth = ((vPcustom.width * 0.85f) / columnsNum).roundToInt()
         private val imageFrame = BitmapFactory.decodeResource(context.resources, R.drawable.item_frame)
+        private val imageButtonPlus = BitmapFactory.decodeResource(context.resources, R.drawable.button_plus)
 
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
             val view = LayoutInflater.from(context).inflate(R.layout.fragment_picker, container, false)
             with (view.findViewById(R.id.rVpicker) as RecyclerView) {
                 layoutManager = GridLayoutManager(context, columnsNum)
-                adapter = RecyclerViewAdapter(context, positionToType(position), eachWidth, imageFrame)
+                adapter = RecyclerViewAdapter(context, positionToType(position), eachWidth, imageFrame, imageButtonPlus)
                 overScrollMode = View.OVER_SCROLL_NEVER
             }
             container.addView(view)
@@ -296,7 +298,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    inner class RecyclerViewAdapter(private val context: Context, val type: CustomType, private val eachWidth: Int, private val imageFrame: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
+    inner class RecyclerViewAdapter(private val context: Context, val type: CustomType, private val eachWidth: Int, private val imageFrame: Bitmap, private val imageButtonPlus: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
         private val colors: MutableList<Int> = CustomManager.getColors(type)
 
@@ -309,20 +311,34 @@ class GameActivity : AppCompatActivity() {
                 val imageBitmap = Bitmap.createBitmap(eachWidth, eachWidth, Bitmap.Config.ARGB_8888)
                 with (Canvas(imageBitmap)) {
                     scale(0.9f, 0.9f, eachWidth / 2f, eachWidth / 2f)
-                    drawCircle(eachWidth / 2f, eachWidth / 2f, eachWidth / 2f, Paint().apply { color = colors[position] })
-                    drawBitmap(imageFrame, Rect(0, 0, imageFrame.width, imageFrame.height), Rect(0, 0, eachWidth, eachWidth), null)
+                    if (position == colors.size) {
+                        drawBitmap(imageButtonPlus, Rect(0, 0, imageButtonPlus.width, imageButtonPlus.height), Rect(0, 0, eachWidth, eachWidth), null)
+                    } else {
+                        drawCircle(eachWidth / 2f, eachWidth / 2f, eachWidth / 2f, Paint().apply { color = colors[position] })
+                        drawBitmap(imageFrame, Rect(0, 0, imageFrame.width, imageFrame.height), Rect(0, 0, eachWidth, eachWidth), null)
+                    }
                 }
                 iBitem.setImageBitmap(imageBitmap)
-                iBitem.setOnClickListener {
-                    CustomManager.updateCurrentColor(type, position)
-                    gameView?.refreshCustomization(type)
-                    CustomManager.save(context, type)
+                if (position == colors.size) {
+                    iBitem.setOnClickListener {
+                        AlertDialog.Builder(context).apply {
+                            setView(layoutInflater.inflate(R.layout.item_picker, null))
+                            setPositiveButton("Add", null)
+                            setNegativeButton("Cancel", null)
+                        }.create().show()
+                    }
+                } else {
+                    iBitem.setOnClickListener {
+                        CustomManager.updateCurrentColor(type, position)
+                        gameView?.refreshCustomization(type)
+                        CustomManager.save(context, type)
+                    }
                 }
             }
         }
 
         override fun getItemCount(): Int {
-            return colors.size
+            return colors.size + 1
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
