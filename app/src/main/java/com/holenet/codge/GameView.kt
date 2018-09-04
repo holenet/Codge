@@ -57,6 +57,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         typeface =  Typeface.MONOSPACE
     }
     private val backgroundColor = ContextCompat.getColor(context, R.color.background)
+    private var ballColor = Color.TRANSPARENT
 
     // score
     private val pref = context.getSharedPreferences("score", 0)
@@ -75,8 +76,8 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var spinningSpeed = 0f
     private var canvasRotation = 0f
 
-    // customization
-    var highlightedType: CustomManager.CustomType? = null
+    // customization highlighting
+    var highlightedType: CustomType? = null
     private val ballHighlightPaint = Paint().apply {
         style = Paint.Style.STROKE
         color = Color.CYAN
@@ -95,43 +96,61 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     init {
         holder.setFormat(PixelFormat.RGBA_8888)
         loadBitmaps()
-        initialize(Direction.STP)
+        initializeGame(Direction.STP)
         gameOver()
     }
 
     private fun loadBitmaps() {
-        // background
+        CustomManager.load(context)
+        loadCustomBackground()
+        loadCustomPlayer()
+        loadCustomBall()
+    }
+    private fun loadCustomBackground() {
         val opt = BitmapFactory.Options().apply { inSampleSize = 2 }
         val backgroundBitmapRaw = BitmapFactory.decodeResource(resources, R.drawable.background, opt)
         backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmapRaw, outerRadius * 2, (outerRadius * 2f / backgroundBitmapRaw.width * backgroundBitmapRaw.height).roundToInt(), true)
         backgroundBitmapRaw.recycle()
-
-        // player
+    }
+    private fun loadCustomPlayer() {
         val playerRadius = innerRadius * Player.RADIUS_SCALE
-        val playerColorBase = 0xFF333333.toInt()
-        val playerColorDeco = 0xFFFFCC33.toInt()
-        val decoBitmap = BitmapFactory.decodeResource(resources, R.drawable.player_deco)
+        val playerBaseColor = CustomManager.getCurrentColor(CustomType.PlayerBaseColor)
+        val playerPatternColor = CustomManager.getCurrentColor(CustomType.PlayerPatternColor)
+        val patternBitmap = BitmapFactory.decodeResource(resources, R.drawable.player_pattern)
         playerBitmap = Bitmap.createBitmap((playerRadius * 2).roundToInt(), (playerRadius * 2).roundToInt(), Bitmap.Config.ARGB_8888)
         with (Canvas(playerBitmap)) {
             translate(playerRadius, playerRadius)
             scale(playerRadius, playerRadius)
-            drawCircle(0f, 0f, 1f, Paint().apply { color = playerColorBase })
-            drawBitmap(decoBitmap, Rect(0, 0, decoBitmap.width, decoBitmap.height), Rect(-1, -1, 1, 1), Paint().apply {
-                colorFilter = PorterDuffColorFilter(playerColorDeco, PorterDuff.Mode.SRC_IN)
+            drawCircle(0f, 0f, 1f, Paint().apply { color = playerBaseColor })
+            drawBitmap(patternBitmap, Rect(0, 0, patternBitmap.width, patternBitmap.height), Rect(-1, -1, 1, 1), Paint().apply {
+                colorFilter = PorterDuffColorFilter(playerPatternColor, PorterDuff.Mode.SRC_IN)
             })
-            decoBitmap.recycle()
+            patternBitmap.recycle()
         }
         with (BitmapFactory.decodeResource(resources, R.drawable.player_base_highlight)) {
-            val baseHighlightSize = playerBitmap.width * this.width / decoBitmap.width
+            val baseHighlightSize = playerBitmap.width * this.width / patternBitmap.width
             playerBaseHighlightBitmap = Bitmap.createScaledBitmap(this, baseHighlightSize, baseHighlightSize, true)
+            recycle()
         }
         with (BitmapFactory.decodeResource(resources, R.drawable.player_pattern_highlight)) {
-            val patternHighlightSize = playerBitmap.width * this.width / decoBitmap.width
+            val patternHighlightSize = playerBitmap.width * this.width / patternBitmap.width
             playerPatternHighlightBitmap = Bitmap.createScaledBitmap(this, patternHighlightSize, patternHighlightSize, true)
+            recycle()
+        }
+    }
+    private fun loadCustomBall() {
+        ballColor = CustomManager.getCurrentColor(CustomType.BallColor)
+    }
+
+    fun refreshCustomization(type: CustomType) {
+        when (type) {
+            CustomType.PlayerBaseColor -> loadCustomPlayer()
+            CustomType.PlayerPatternColor -> loadCustomPlayer()
+            CustomType.BallColor -> loadCustomBall()
         }
     }
 
-    private fun initialize(dir: Direction) {
+    private fun initializeGame(dir: Direction) {
         gameTicks = 0
         score = 0
 
@@ -149,10 +168,6 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         haveTurned = false
         spinningDirection = Direction.STP
         canvasRotation = 0f
-    }
-
-    fun updateColoring() {
-        // TODO: change color/bitmaps for models
     }
 
     private fun processInput() {
@@ -205,7 +220,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         flagGameStart = false
         gameMode = GameMode.PLAYING
 
-        initialize(startDirectionTemp)
+        initializeGame(startDirectionTemp)
         firstPlay = false
     }
 
@@ -255,7 +270,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private fun update() {
         // spinning
         if (gameMode == GameMode.PLAYING && gameTicks == 30 * 1000 / SKIP_MILLIS && !haveTurned) {
-            Handler(Looper.getMainLooper()).post { Toast.makeText(context, "Do You Love Spinning?", Toast.LENGTH_LONG).show(); }
+            Handler(Looper.getMainLooper()).post { Toast.makeText(context, "Do You Love Spin?", Toast.LENGTH_LONG).show(); }
             spinningDirection = player.dir
             spinningSpeed = spinningDirection.rotation * 1.8f
         }
@@ -375,19 +390,19 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 translate(innerRadius * player.x, innerRadius * player.y)
                 rotate(player.angle)
                 drawBitmap(playerBitmap, -playerBitmap.width / 2f, -playerBitmap.height / 2f, null)
-                if (highlightedType == CustomManager.CustomType.PlayerBaseColor)
+                if (highlightedType == CustomType.PlayerBaseColor)
                     drawBitmap(playerBaseHighlightBitmap, -playerBaseHighlightBitmap.width / 2f, -playerBaseHighlightBitmap.height / 2f, null)
-                if (highlightedType == CustomManager.CustomType.PlayerPatternColor || highlightedType == CustomManager.CustomType.PlayerPatternShape)
+                if (highlightedType == CustomType.PlayerPatternColor || highlightedType == CustomType.PlayerPatternShape)
                     drawBitmap(playerPatternHighlightBitmap, -playerPatternHighlightBitmap.width / 2f, -playerPatternHighlightBitmap.height / 2f, null)
                 restore()
 
                 // draw balls
-                paint.color = 0xFFF46700.toInt()
+                paint.color = ballColor
                 save()
                 scale(innerRadius, innerRadius)
                 for (ball in balls) {
                     drawCircle(ball.x, ball.y, ball.r, paint)
-                    if (highlightedType == CustomManager.CustomType.BallColor)
+                    if (highlightedType == CustomType.BallColor)
                         drawCircle(ball.x, ball.y, ball.r * 1.25f, ballHighlightPaint.apply { strokeWidth = ball.r * 0.5f })
                 }
                 restore()

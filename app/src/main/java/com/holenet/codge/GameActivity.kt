@@ -12,7 +12,7 @@ import android.support.v4.view.ViewPager
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
-import android.widget.ImageView
+import android.widget.ImageButton
 import kotlinx.android.synthetic.main.activity_game.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -24,7 +24,7 @@ class GameActivity : AppCompatActivity() {
     }
     var gameView: GameView? = null
 
-    var costumX = 0f
+    var customX = 0f
     var rightX = 0f
     var smallWidth = 0
     var bigWidth = 0
@@ -73,25 +73,12 @@ class GameActivity : AppCompatActivity() {
                 fLgame.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                 // save some properties for UI animation
-                costumX = bTcostum.x
+                customX = bTcostum.x
                 rightX = bTright.x
                 smallWidth = bTscore.width
                 bigWidth = cLcontrol.width / 2
                 bigHeight = cLcontrol.height
                 entireWidth = fLgame.width
-
-                // customize view pager
-                with (vPcustom) {
-                    adapter = ViewPagerAdapter(this@GameActivity)
-                    overScrollMode = View.OVER_SCROLL_NEVER
-                    addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
-                        override fun onPageScrollStateChanged(state: Int) {}
-                        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
-                        override fun onPageSelected(position: Int) {
-                            gameView?.highlightedType = positionToType(position)
-                        }
-                    })
-                }
 
                 with(GameView(this@GameActivity, fLgame.width / 2)) {
                     gameView = this
@@ -156,6 +143,19 @@ class GameActivity : AppCompatActivity() {
                     // start
                     onResume()
                 }
+
+                // customize view pager
+                with (vPcustom) {
+                    adapter = ViewPagerAdapter(this@GameActivity)
+                    overScrollMode = View.OVER_SCROLL_NEVER
+                    addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+                        override fun onPageScrollStateChanged(state: Int) {}
+                        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
+                        override fun onPageSelected(position: Int) {
+                            gameView?.highlightedType = positionToType(position)
+                        }
+                    })
+                }
             }
         })
     }
@@ -192,7 +192,7 @@ class GameActivity : AppCompatActivity() {
                 currentGameValue = value
 
                 bTscore.x = -smallWidth * value
-                bTcostum.x = costumX + smallWidth * value
+                bTcostum.x = customX + smallWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX + bigWidth * value
 
@@ -225,12 +225,12 @@ class GameActivity : AppCompatActivity() {
                 currentCustomValue = value
 
                 bTscore.x = -smallWidth * value
-                bTcostum.x = costumX - entireWidth * value
+                bTcostum.x = customX - entireWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX - entireWidth * value
 
                 val invertedValue = 1f - value
-                bTback.x = (entireWidth + costumX) * invertedValue
+                bTback.x = (entireWidth + customX) * invertedValue
                 cLcustom.x = entireWidth * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
@@ -261,20 +261,16 @@ class GameActivity : AppCompatActivity() {
     }
 
     fun positionToType(position: Int) = when (position) {
-        0 -> CustomManager.CustomType.PlayerBaseColor
-        1 -> CustomManager.CustomType.PlayerPatternColor
-        2 -> CustomManager.CustomType.BallColor
-        else -> CustomManager.CustomType.PlayerPatternShape
+        0 -> CustomType.PlayerBaseColor
+        1 -> CustomType.PlayerPatternColor
+        2 -> CustomType.BallColor
+        else -> CustomType.PlayerPatternShape
     }
 
     inner class ViewPagerAdapter(private val context: Context) : PagerAdapter() {
         private val columnsNum = 5
         private val eachWidth = ((vPcustom.width * 0.85f) / columnsNum).roundToInt()
         private val imageFrame = BitmapFactory.decodeResource(context.resources, R.drawable.item_frame)
-
-        init {
-            CustomManager.loadColors(context)
-        }
 
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
             val view = LayoutInflater.from(context).inflate(R.layout.fragment_picker, container, false)
@@ -300,7 +296,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    class RecyclerViewAdapter(context: Context, val type: CustomManager.CustomType, private val eachWidth: Int, private val imageFrame: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
+    inner class RecyclerViewAdapter(private val context: Context, val type: CustomType, private val eachWidth: Int, private val imageFrame: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
         private val colors: MutableList<Int> = CustomManager.getColors(type)
 
@@ -317,6 +313,11 @@ class GameActivity : AppCompatActivity() {
                     drawBitmap(imageFrame, Rect(0, 0, imageFrame.width, imageFrame.height), Rect(0, 0, eachWidth, eachWidth), null)
                 }
                 iBitem.setImageBitmap(imageBitmap)
+                iBitem.setOnClickListener {
+                    CustomManager.updateCurrentColor(type, position)
+                    gameView?.refreshCustomization(type)
+                    CustomManager.save(context, type)
+                }
             }
         }
 
@@ -324,8 +325,8 @@ class GameActivity : AppCompatActivity() {
             return colors.size
         }
 
-        class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val iBitem : ImageView = itemView.findViewById(R.id.iBitem)
+        inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val iBitem : ImageButton = itemView.findViewById(R.id.iBitem)
         }
     }
 }
