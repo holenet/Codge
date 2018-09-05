@@ -80,6 +80,20 @@ object CustomManager {
         colorsSet[type]!!.add(color)
     }
 
+    fun changeColor(type: CustomType, index: Int, color: Int) {
+        colorsSet[type]!![index] = color
+    }
+
+    fun deleteColor(type: CustomType, index: Int) {
+        colorsSet[type]!!.removeAt(index)
+        if (colorsSet[type]!!.size == 0) {
+            colorsSet[type]!!.add(Color.BLACK)
+        }
+        if (indexSet[type]!! >= colorsSet[type]!!.size) {
+            indexSet[type] = indexSet[type]!! - 1
+        }
+    }
+
     fun save(context: Context, type: CustomType) {
         val pref = getPreferences(context)
         with (pref.edit()) {

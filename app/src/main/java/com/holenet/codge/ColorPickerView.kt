@@ -5,10 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.hypot
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 class ColorPickerView : View {
     constructor(context: Context) : super(context)
@@ -38,10 +35,6 @@ class ColorPickerView : View {
     }
 
     private var changingMode = ChangingMode.NONE
-    private var circlePickerX = 0f
-    private var circlePickerY = 0f
-    private var barPickerX = 1f
-
     private val hsvTemp = floatArrayOf(0f, 0f, 1f)
     private val hsv = floatArrayOf(0f, 0f, 1f)
     var color: Int
@@ -49,7 +42,7 @@ class ColorPickerView : View {
         set(value) {
             Color.colorToHSV(value, hsv)
             hsvTemp[0] = hsv[0]
-            hsvTemp[0] = hsv[1]
+            hsvTemp[1] = hsv[1]
             invalidate()
         }
 
@@ -121,6 +114,13 @@ class ColorPickerView : View {
             drawCircle(0f ,0f, 1f, circlePaint2)
             drawCircle(0f, 0f, 1f, circlePaint3.apply { alpha = (255 * (1 - hsv[2])).roundToInt() })
             // picker
+            var circlePickerX = (hsv[1] * cos(hsv[0].toRadian())).toFloat()
+            var circlePickerY = (hsv[1] * sin(hsv[0].toRadian())).toFloat()
+            val length = hypot(circlePickerX, circlePickerY)
+            if (length > 1) {
+                circlePickerX /= length
+                circlePickerY /= length
+            }
             drawCircle(circlePickerX, circlePickerY, CIRCLE_PICKER_RADIUS / CIRCLE_RADIUS, circlePickerPaintInner.apply { color = this@ColorPickerView.color })
             drawCircle(circlePickerX, circlePickerY, CIRCLE_PICKER_RADIUS / CIRCLE_RADIUS, circlePickerPaint)
             restore()
@@ -133,6 +133,7 @@ class ColorPickerView : View {
             drawRoundRect(0f, -barHalfHeight, 1f, barHalfHeight, barHalfHeight, barHalfHeight, barPaint.apply { color = Color.HSVToColor(hsvTemp) })
             drawRoundRect(0f, -barHalfHeight, 1f, barHalfHeight, barHalfHeight, barHalfHeight, barPaint2)
             // picker
+            val barPickerX = hsv[2]
             translate(barPickerX, 0f)
             val barPickerHalfWidth = BAR_PICKER_WIDTH / 2f / BAR_WIDTH
             val barPickerHalfHeight = BAR_PICKER_HEIGHT / 2f / BAR_WIDTH
@@ -156,13 +157,9 @@ class ColorPickerView : View {
 
         when (changingMode) {
             ChangingMode.CIRCLE -> {
-                circlePickerX = (x - CIRCLE_CENTER) / CIRCLE_RADIUS
-                circlePickerY = (y - CIRCLE_CENTER) / CIRCLE_RADIUS
-                val length = hypot(circlePickerX, circlePickerY)
-                if (length > 1) {
-                    circlePickerX /= length
-                    circlePickerY /= length
-                }
+                val circlePickerX = (x - CIRCLE_CENTER) / CIRCLE_RADIUS
+                val circlePickerY = (y - CIRCLE_CENTER) / CIRCLE_RADIUS
+                val length = min(hypot(circlePickerX, circlePickerY), 1f)
                 hsv[0] = (atan2(circlePickerY, circlePickerX) * 180 / PI).toFloat()
                 if (hsv[0] < 0) hsv[0] += 360f
                 hsv[1] = length
@@ -171,7 +168,7 @@ class ColorPickerView : View {
                 invalidate()
             }
             ChangingMode.BAR -> {
-                barPickerX = (x - BAR_X) / BAR_WIDTH
+                var barPickerX = (x - BAR_X) / BAR_WIDTH
                 if (barPickerX < 0)
                     barPickerX = 0f
                 else if (barPickerX > 1)

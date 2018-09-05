@@ -2,6 +2,7 @@ package com.holenet.codge
 
 import android.animation.Animator
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.support.v7.app.AppCompatActivity
@@ -97,13 +98,13 @@ class GameActivity : AppCompatActivity() {
                     }
 
                     // buttons on ready
-                    bTleft.setOnTouchListener { v, event ->
+                    bTleft.setOnTouchListener { _, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
                             if (gameMode == GameView.Companion.GameMode.READY) startDirection = Direction.CW
                         }
                         true
                     }
-                    bTright.setOnTouchListener { v, event ->
+                    bTright.setOnTouchListener { _, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
                             if (gameMode == GameView.Companion.GameMode.READY) startDirection = Direction.CCW
                         }
@@ -111,19 +112,19 @@ class GameActivity : AppCompatActivity() {
                     }
 
                     // buttons on play
-                    bTccw.setOnTouchListener { v, event ->
+                    bTccw.setOnTouchListener { _, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
                             toTurn = !toTurn
                         }
                         true
                     }
-                    bTcw.setOnTouchListener { v, event ->
+                    bTcw.setOnTouchListener { _, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
                             toTurn = !toTurn
                         }
                         true
                     }
-                    bTjump.setOnTouchListener { v, event ->
+                    bTjump.setOnTouchListener { _, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {
                             if (toJumpOff) toJumpOff = false
                             toJumpOn = true
@@ -306,6 +307,7 @@ class GameActivity : AppCompatActivity() {
             return ViewHolder(inflater.inflate(R.layout.item_picker, parent, false))
         }
 
+        @SuppressLint("InflateParams")
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             holder.apply {
                 val imageBitmap = Bitmap.createBitmap(eachWidth, eachWidth, Bitmap.Config.ARGB_8888)
@@ -322,9 +324,17 @@ class GameActivity : AppCompatActivity() {
                 if (position == colors.size) {
                     iBitem.setOnClickListener {
                         AlertDialog.Builder(context).apply {
-                            setView(layoutInflater.inflate(R.layout.dialog_color_picker, null))
+                            val view = layoutInflater.inflate(R.layout.dialog_color_picker, null)
+                            val colorPickerView = view.findViewById<ColorPickerView>(R.id.colorPickerView)
+                            setView(view)
                             setCancelable(false)
-                            setPositiveButton("Add", null)
+                            setPositiveButton("Add") { _, _ ->
+                                CustomManager.addColor(type, colorPickerView.color)
+                                CustomManager.updateCurrentColor(type, position)
+                                notifyDataSetChanged()
+                                gameView?.refreshCustomization(type)
+                                CustomManager.save(context, type)
+                            }
                             setNegativeButton("Cancel", null)
                         }.create().show()
                     }
@@ -333,6 +343,29 @@ class GameActivity : AppCompatActivity() {
                         CustomManager.updateCurrentColor(type, position)
                         gameView?.refreshCustomization(type)
                         CustomManager.save(context, type)
+                    }
+                    iBitem.setOnLongClickListener {
+                        AlertDialog.Builder(context).apply {
+                            val view = layoutInflater.inflate(R.layout.dialog_color_picker, null)
+                            val colorPickerView = view.findViewById<ColorPickerView>(R.id.colorPickerView)
+                            colorPickerView.color = colors[position]
+                            setView(view)
+                            setCancelable(false)
+                            setPositiveButton("Apply") { _, _ ->
+                                CustomManager.changeColor(type, position, colorPickerView.color)
+                                gameView?.refreshCustomization(type)
+                                notifyDataSetChanged()
+                                CustomManager.save(context, type)
+                            }
+                            setNeutralButton("Delete") { _, _ ->
+                                CustomManager.deleteColor(type, position)
+                                gameView?.refreshCustomization(type)
+                                notifyDataSetChanged()
+                                CustomManager.save(context, type)
+                            }
+                            setNegativeButton("Cancel", null)
+                        }.create().show()
+                        true
                     }
                 }
             }
