@@ -322,7 +322,8 @@ class GameActivity : AppCompatActivity() {
                 if (position == colors.size) {
                     iBitem.setOnClickListener {
                         AlertDialog.Builder(context).apply {
-                            setView(layoutInflater.inflate(R.layout.item_picker, null))
+                            setView(layoutInflater.inflate(R.layout.dialog_color_picker, null))
+                            setCancelable(false)
                             setPositiveButton("Add", null)
                             setNegativeButton("Cancel", null)
                         }.create().show()
