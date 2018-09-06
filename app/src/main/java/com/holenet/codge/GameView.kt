@@ -6,6 +6,7 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.support.v4.content.ContextCompat
+import android.view.MotionEvent
 import android.view.SurfaceView
 import android.widget.Toast
 import kotlin.math.*
@@ -32,6 +33,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var gameTicks = 0
     private var gameThread: Thread? = null
     var firstPlay = true; private set
+    private var isPaused = false
 
     // input variables
     var startDirection: Direction? = null
@@ -48,6 +50,8 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var playerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     private var playerBaseHighlightBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     private var playerPatternHighlightBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+    private var ballBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+    private var ballHighlightBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
 
     // drawing
     private var innerRadius = outerRadius * 0.9509259f
@@ -57,7 +61,6 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         typeface =  Typeface.MONOSPACE
     }
     private val backgroundColor = ContextCompat.getColor(context, R.color.background)
-    private var ballColor = Color.TRANSPARENT
 
     // score
     private val pref = context.getSharedPreferences("score", 0)
@@ -68,7 +71,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     // callback
     var onPrepare = { dir: Direction -> }
     var onGameOver = {}
-    var onPlayerTurn = {dir: Direction -> }
+    var onPlayerTurn = { dir: Direction -> }
 
     // hidden spinning
     private var haveTurned = false
@@ -78,10 +81,6 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     // customization highlighting
     var highlightedType: CustomType? = null
-    private val ballHighlightPaint = Paint().apply {
-        style = Paint.Style.STROKE
-        color = Color.CYAN
-    }
 
     // calculate fps
     // NOTE: This is for development environment, should be erased on the production releases
@@ -122,7 +121,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             translate(playerRadius, playerRadius)
             scale(playerRadius, playerRadius)
             drawCircle(0f, 0f, 1f, Paint().apply { color = playerBaseColor })
-            drawBitmap(patternBitmap, Rect(0, 0, patternBitmap.width, patternBitmap.height), Rect(-1, -1, 1, 1), Paint().apply {
+            drawBitmap(patternBitmap, Rect(0, 0, patternBitmap.width, patternBitmap.height), Rect(-1, -1, 1, 1), Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 colorFilter = PorterDuffColorFilter(playerPatternColor, PorterDuff.Mode.SRC_IN)
             })
             patternBitmap.recycle()
@@ -139,7 +138,23 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         }
     }
     private fun loadCustomBall() {
-        ballColor = CustomManager.getCurrentColor(CustomType.BallColor)
+        val ballRadius = innerRadius * Ball.RADIUS_SCALE
+        val ballColor = CustomManager.getCurrentColor(CustomType.BallColor)
+        val ballShapeBitmap = BitmapFactory.decodeResource(resources, R.drawable.ball)
+        ballBitmap = Bitmap.createBitmap((ballRadius * 2).roundToInt(), (ballRadius * 2).roundToInt(), Bitmap.Config.ARGB_8888)
+        with (Canvas(ballBitmap)) {
+            translate(ballRadius, ballRadius)
+            scale(ballRadius, ballRadius)
+            drawBitmap(ballShapeBitmap, Rect(0, 0, ballShapeBitmap.width, ballShapeBitmap.height), Rect(-1, -1, 1, 1), Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                colorFilter = PorterDuffColorFilter(ballColor, PorterDuff.Mode.SRC_IN)
+            })
+            ballShapeBitmap.recycle()
+        }
+        with (BitmapFactory.decodeResource(resources, R.drawable.ball_highlight)) {
+            val highlightSize = ballBitmap.width * this.width / ballShapeBitmap.width
+            ballHighlightBitmap = Bitmap.createScaledBitmap(this, highlightSize, highlightSize, true)
+            recycle()
+        }
     }
 
     fun refreshCustomization(type: CustomType) {
@@ -251,10 +266,12 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     gameOver()
                 processInput()
 
-                gameTicks++
-                if (gameMode == GameMode.PLAYING)
-                    score++
-                update()
+                if (gameMode == GameMode.PLAYING || !isPaused) {
+                    gameTicks++
+                    update()
+                    if (gameMode == GameMode.PLAYING)
+                        score++
+                }
 
                 nextGameMillis += SKIP_MILLIS
                 loops++
@@ -397,15 +414,11 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 restore()
 
                 // draw balls
-                paint.color = ballColor
-                save()
-                scale(innerRadius, innerRadius)
                 for (ball in balls) {
-                    drawCircle(ball.x, ball.y, ball.r, paint)
+                    drawBitmap(ballBitmap, innerRadius * ball.x - ballBitmap.width / 2f, innerRadius * ball.y - ballBitmap.height / 2f, null)
                     if (highlightedType == CustomType.BallColor)
-                        drawCircle(ball.x, ball.y, ball.r * 1.25f, ballHighlightPaint.apply { strokeWidth = ball.r * 0.5f })
+                        drawBitmap(ballHighlightBitmap, innerRadius * ball.x - ballHighlightBitmap.width / 2f, innerRadius * ball.y - ballHighlightBitmap.height / 2f, null)
                 }
-                restore()
 
                 restore()
                 // draw fps
@@ -423,6 +436,15 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 holder.unlockCanvasAndPost(this)
             }
         }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            isPaused = true
+        } else if (event.action == MotionEvent.ACTION_UP) {
+            isPaused = false
+        }
+        return true
     }
 
     fun onPause() {
