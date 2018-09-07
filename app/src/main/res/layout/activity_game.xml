@@ -17,6 +17,20 @@
 
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/fLfadeGame"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0"
+        android:background="@color/background"
+        android:elevation="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </FrameLayout>
+
     <android.support.constraint.ConstraintLayout
         android:id="@+id/cLUI"
         android:layout_width="0dp"
@@ -74,11 +88,11 @@
             app:layout_constraintGuide_percent="0.17155" />
 
         <ImageButton
-            android:id="@+id/bTscore"
+            android:id="@+id/bTranking"
             style="@style/ImageButtonStyleSmall"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="score"
+            android:contentDescription="ranking"
             android:elevation="1dp"
             android:padding="4dp"
             android:src="@drawable/button_trophy"
@@ -88,14 +102,14 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/bTback"
+            android:id="@+id/bTbackLeft"
             style="@style/ImageButtonStyleSmall"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="score"
+            android:contentDescription="back"
             android:elevation="1dp"
             android:padding="4dp"
-            android:src="@drawable/button_back"
+            android:src="@drawable/button_left_small"
             android:translationX="10000dp"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toStartOf="@+id/guideline4"
@@ -110,11 +124,11 @@
             app:layout_constraintGuide_percent="0.828417" />
 
         <ImageButton
-            android:id="@+id/bTcostum"
+            android:id="@+id/bTcustom"
             style="@style/ImageButtonStyleSmall"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="costum"
+            android:contentDescription="customizing"
             android:elevation="1dp"
             android:padding="4dp"
             android:src="@drawable/button_custom"
@@ -122,6 +136,33 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guideline3"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/bTbackRight"
+            style="@style/ImageButtonStyleSmall"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:contentDescription="back"
+            android:elevation="1dp"
+            android:padding="4dp"
+            android:src="@drawable/button_right_small"
+            android:translationX="-10000dp"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/guideline3"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/cLranking"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:translationX="-10000dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </android.support.constraint.ConstraintLayout>
 
         <android.support.constraint.ConstraintLayout
             android:id="@+id/cLcustom"

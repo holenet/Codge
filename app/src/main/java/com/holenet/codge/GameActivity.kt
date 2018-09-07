@@ -75,9 +75,9 @@ class GameActivity : AppCompatActivity() {
                 fLgame.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                 // save some properties for UI animation
-                customX = bTcostum.x
+                customX = bTcustom.x
                 rightX = bTright.x
-                smallWidth = bTscore.width
+                smallWidth = bTranking.width
                 bigWidth = cLcontrol.width / 2
                 bigHeight = cLcontrol.height
                 entireWidth = fLgame.width
@@ -135,11 +135,19 @@ class GameActivity : AppCompatActivity() {
                     }
 
                     // buttons custom
-                    bTcostum.setOnClickListener {
+                    bTcustom.setOnClickListener {
                         changeCustomMode(true)
                     }
-                    bTback.setOnClickListener {
+                    bTbackLeft.setOnClickListener {
                         changeCustomMode(false)
+                    }
+
+                    // buttons ranking
+                    bTranking.setOnClickListener {
+                        changeRankingMode(true)
+                    }
+                    bTbackRight.setOnClickListener {
+                        changeRankingMode(false)
                     }
 
                     // start
@@ -176,6 +184,10 @@ class GameActivity : AppCompatActivity() {
         for (button in buttons) button.isEnabled = true
     }
 
+    private fun dismissTitle() {
+        iVtitle.animate().translationY(-iVtitle.height.toFloat()).withLayer().setDuration(UI_ANIM_TIME.toLong()).start()
+    }
+
     private var gameAnim: ValueAnimator? = null
     private var currentGameValue = 0f
     private fun changeGameMode(onPlay: Boolean) {
@@ -183,9 +195,9 @@ class GameActivity : AppCompatActivity() {
 
         // title animation (only for the first play)
         if (gameView?.firstPlay == true && onPlay)
-            iVtitle.animate().translationY(-iVtitle.height.toFloat()).withLayer().setDuration(UI_ANIM_TIME.toLong()).start()
+            dismissTitle()
 
-        val views = arrayOf(bTscore, bTcostum, bTleft, bTccw, bTcw, bTright, bTjump)
+        val views = arrayOf(bTranking, bTcustom, bTleft, bTccw, bTcw, bTright, bTjump)
 
         ValueAnimator.ofFloat(currentGameValue, if (onPlay) 1f else 0f).apply {
             duration = (UI_ANIM_TIME * abs(currentGameValue - if (onPlay) 1f else 0f)).toLong()
@@ -193,8 +205,8 @@ class GameActivity : AppCompatActivity() {
                 val value = it.animatedValue as Float
                 currentGameValue = value
 
-                bTscore.x = -smallWidth * value
-                bTcostum.x = customX + smallWidth * value
+                bTranking.x = -smallWidth * value
+                bTcustom.x = customX + smallWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX + bigWidth * value
 
@@ -204,9 +216,9 @@ class GameActivity : AppCompatActivity() {
                 bTjump.y = bigHeight * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTscore, bTcostum) }
-                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcostum) }
-                override fun onAnimationCancel(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTscore, bTcostum) }
+                override fun onAnimationStart(animation: Animator?) { turnOnHardwareAcceleration(*views); lockButtons(bTranking, bTcustom) }
+                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTranking, bTcustom) }
+                override fun onAnimationCancel(animation: Animator?) { onAnimationEnd(null) }
                 override fun onAnimationRepeat(animation: Animator?) {}
             })
             gameAnim = this
@@ -218,7 +230,7 @@ class GameActivity : AppCompatActivity() {
     private fun changeCustomMode(onCustom: Boolean) {
         if (customAnim?.isRunning == true) customAnim?.cancel()
 
-        val views = arrayOf(bTscore, bTcostum, bTleft, bTright)
+        val views = arrayOf(bTranking, bTcustom, bTleft, bTright, bTbackLeft, cLcustom)
 
         ValueAnimator.ofFloat(currentCustomValue, if (onCustom) 1f else 0f).apply {
             duration = (UI_ANIM_TIME * abs(currentCustomValue - if (onCustom) 1f else 0f)).toLong()
@@ -226,13 +238,13 @@ class GameActivity : AppCompatActivity() {
                 val value = it.animatedValue as Float
                 currentCustomValue = value
 
-                bTscore.x = -smallWidth * value
-                bTcostum.x = customX - entireWidth * value
+                bTranking.x = -smallWidth * value
+                bTcustom.x = customX - entireWidth * value
                 bTleft.x = -bigWidth * value
                 bTright.x = rightX - entireWidth * value
 
                 val invertedValue = 1f - value
-                bTback.x = (entireWidth + customX) * invertedValue
+                bTbackLeft.x = (entireWidth + customX) * invertedValue
                 cLcustom.x = entireWidth * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
@@ -244,11 +256,60 @@ class GameActivity : AppCompatActivity() {
                     else
                         gameView?.highlightedType = null
                 }
-                override fun onAnimationEnd(animation: Animator?) { turnOffHardwareAcceleration(*views); unlockButtons(bTleft, bTright); }
-                override fun onAnimationCancel(animation: Animator?) { onAnimationEnd(null) }
+                override fun onAnimationEnd(animation: Animator?) {
+                    turnOffHardwareAcceleration(*views)
+                    unlockButtons(bTleft, bTright)
+                }
+                override fun onAnimationCancel(animation: Animator?) {
+                    onAnimationEnd(null)
+                }
                 override fun onAnimationRepeat(animation: Animator?) {}
             })
             customAnim = this
+        }.start()
+    }
+
+    private var rankingAnim: ValueAnimator? = null
+    private var currentRankingValue = 0f
+    private fun changeRankingMode(onRanking: Boolean) {
+        if (rankingAnim?.isRunning == true) rankingAnim?.cancel()
+
+        if (gameView?.firstPlay == true)
+            dismissTitle()
+
+        val views = arrayOf(bTranking, bTcustom, bTleft, bTright, bTbackRight, cLranking)
+
+        ValueAnimator.ofFloat(currentRankingValue, if (onRanking) 1f else 0f).apply {
+            duration = (UI_ANIM_TIME * abs(currentRankingValue - if (onRanking) 1f else 0f)).toLong()
+            addUpdateListener {
+                val value = it.animatedValue as Float
+                currentRankingValue = value
+
+                bTranking.x = entireWidth * value
+                bTcustom.x = customX + smallWidth * value
+                bTleft.x = entireWidth * value
+                bTright.x = rightX + bigWidth * value
+                fLfadeGame.alpha = value * 0.5f
+
+                val invertedValue = 1f - value
+                bTbackRight.x = customX - (customX + entireWidth) * invertedValue
+                cLranking.x = -entireWidth * invertedValue
+            }
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) {
+                    turnOnHardwareAcceleration(*views)
+                    lockButtons(bTleft, bTright)
+                }
+                override fun onAnimationEnd(animation: Animator?) {
+                    turnOffHardwareAcceleration(*views)
+                    unlockButtons(bTleft, bTright)
+                }
+                override fun onAnimationCancel(animation: Animator?) {
+                    onAnimationEnd(null)
+                }
+                override fun onAnimationRepeat(animation: Animator?) {}
+            })
+            rankingAnim = this
         }.start()
     }
 
