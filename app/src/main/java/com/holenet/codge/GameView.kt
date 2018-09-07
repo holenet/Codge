@@ -82,6 +82,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     // customization highlighting
     var highlightedType: CustomType? = null
 
+    // game record and replay
+    var record: Record? = null
+
     // calculate fps
     // NOTE: This is for development environment, should be erased on the production releases
     private var currentFPS = 0
@@ -183,6 +186,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         haveTurned = false
         spinningDirection = Direction.STP
         canvasRotation = 0f
+
+        if (dir != Direction.STP)
+            record = Record(System.currentTimeMillis(), firstDirection = dir)
     }
 
     private fun processInput() {
@@ -201,17 +207,20 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     player.turn()
                     onPlayerTurn(player.dir)
                     haveTurned = true
+                    record?.inputList?.add(Pair(gameTicks, Input.TURN))
                 }
 
                 val toJumpOn = toJumpOn
                 this.toJumpOn = false
                 if (toJumpOn) {
                     player.jumping = true
+                    record?.inputList?.add(Pair(gameTicks, Input.JUMP_ON))
                 } else {
                     val toJumpOff = toJumpOff
                     this.toJumpOff = false
                     if (toJumpOff) {
                         player.jumping = false
+                        record?.inputList?.add(Pair(gameTicks, Input.JUMP_OFF))
                     }
                 }
             }
@@ -249,6 +258,12 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             bestScore = max(bestScore, score)
             putInt(prefKeyBaseScore, bestScore)
             apply()
+        }
+
+        val record = record
+        this.record = null
+        if (record != null) {
+            RecordManager.saveRecord(context, record)
         }
     }
 
