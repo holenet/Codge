@@ -23,6 +23,9 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         enum class GameMode {
             READY, PREPARING, PLAYING
         }
+
+        const val timeFormat = "%.2f"
+        const val bestTimeFormat = "Best %.2f"
     }
 
     // game running
@@ -263,7 +266,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         val record = record
         this.record = null
         if (record != null) {
-            RecordManager.saveRecord(context, record)
+            RecordManager.saveRecord(context, record.apply { score = this@GameView.score })
         }
     }
 
@@ -377,8 +380,6 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     }
 
     val Paint.textHeight get() = fontMetrics.descent - fontMetrics.ascent
-    val timeFormat = "%.2f"
-    val bestTimeFormat = "Best %.2f"
     private fun draw() {
         if (holder.surface.isValid) {
             with (holder.lockCanvas()) {

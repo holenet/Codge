@@ -25,4 +25,8 @@
         <item name="android:scaleY">1.09259</item>
     </style>
 
+    <style name="RecordTextViewStyle">
+        <item name="android:textColor">@color/background</item>
+    </style>
+
 </resources>

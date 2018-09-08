@@ -12,11 +12,17 @@ import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.GridLayoutManager
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
 import android.widget.ImageButton
+import android.widget.TextView
+import com.holenet.codge.GameView.Companion.SKIP_MILLIS
 import kotlinx.android.synthetic.main.activity_game.*
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class GameActivity : AppCompatActivity() {
@@ -166,6 +172,25 @@ class GameActivity : AppCompatActivity() {
                         }
                     })
                 }
+
+                // ranking records
+                with (rVranking) {
+                    RecordManager.loadRecordList(context)
+                    val linearLayoutManager = LinearLayoutManager(context)
+                    layoutManager = linearLayoutManager
+                    val recordAdapter = RecordRecyclerViewAdapter(context)
+                    adapter = recordAdapter
+                    overScrollMode = View.OVER_SCROLL_NEVER
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
+                            val totalItemCount = linearLayoutManager.itemCount
+                            val lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition()
+                            if (!recordAdapter.loading && totalItemCount == lastVisibleItem + 1) {
+                                recordAdapter.loadMore()
+                            }
+                        }
+                    })
+                }
             }
         })
     }
@@ -274,9 +299,6 @@ class GameActivity : AppCompatActivity() {
     private fun changeRankingMode(onRanking: Boolean) {
         if (rankingAnim?.isRunning == true) rankingAnim?.cancel()
 
-        if (gameView?.firstPlay == true)
-            dismissTitle()
-
         val views = arrayOf(bTranking, bTcustom, bTleft, bTright, bTbackRight, cLranking)
 
         ValueAnimator.ofFloat(currentRankingValue, if (onRanking) 1f else 0f).apply {
@@ -303,6 +325,9 @@ class GameActivity : AppCompatActivity() {
                 override fun onAnimationEnd(animation: Animator?) {
                     turnOffHardwareAcceleration(*views)
                     unlockButtons(bTleft, bTright)
+                    if (onRanking) {
+                        (rVranking.adapter as RecordRecyclerViewAdapter).refresh()
+                    }
                 }
                 override fun onAnimationCancel(animation: Animator?) {
                     onAnimationEnd(null)
@@ -340,7 +365,7 @@ class GameActivity : AppCompatActivity() {
             val view = LayoutInflater.from(context).inflate(R.layout.fragment_picker, container, false)
             with (view.findViewById(R.id.rVpicker) as RecyclerView) {
                 layoutManager = GridLayoutManager(context, columnsNum)
-                adapter = RecyclerViewAdapter(context, positionToType(position), eachWidth, imageFrame, imageButtonPlus)
+                adapter = CustomRecyclerViewAdapter(context, positionToType(position), eachWidth, imageFrame, imageButtonPlus)
                 overScrollMode = View.OVER_SCROLL_NEVER
             }
             container.addView(view)
@@ -360,7 +385,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    inner class RecyclerViewAdapter(private val context: Context, val type: CustomType, private val eachWidth: Int, private val imageFrame: Bitmap, private val imageButtonPlus: Bitmap) : RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
+    inner class CustomRecyclerViewAdapter(private val context: Context, val type: CustomType, private val eachWidth: Int, private val imageFrame: Bitmap, private val imageButtonPlus: Bitmap) : RecyclerView.Adapter<CustomRecyclerViewAdapter.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
         private val colors: MutableList<Int> = CustomManager.getColors(type)
 
@@ -382,6 +407,7 @@ class GameActivity : AppCompatActivity() {
                     }
                 }
                 iBitem.setImageBitmap(imageBitmap)
+
                 if (position == colors.size) {
                     iBitem.setOnClickListener {
                         AlertDialog.Builder(context).apply {
@@ -437,7 +463,75 @@ class GameActivity : AppCompatActivity() {
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val iBitem : ImageButton = itemView.findViewById(R.id.iBitem)
+            val iBitem: ImageButton = itemView.findViewById(R.id.iBitem)
         }
+    }
+
+    class RecordRecyclerViewAdapter(context: Context) : RecyclerView.Adapter<RecordRecyclerViewAdapter.ViewHolder>() {
+        private val inflater = LayoutInflater.from(context)
+        private var records: List<Record> = ArrayList()
+        private var currentSize = 0
+        var loading = false; private set
+
+        override fun getItemViewType(position: Int): Int {
+            return if (position < currentSize) 0 else -1
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecordRecyclerViewAdapter.ViewHolder {
+            return if (viewType == 0)
+                ItemViewHolder(inflater.inflate(R.layout.item_record, parent, false))
+            else
+                LoadingViewHolder(inflater.inflate(R.layout.item_loading, parent, false))
+        }
+
+        @SuppressLint("SimpleDateFormat")
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val record = records[position]
+            if (holder is ItemViewHolder)
+                holder.apply {
+                    val time = "${GameView.timeFormat.format(record.score * SKIP_MILLIS / 1000f)}s"
+                    tVscore.text = time
+                    val calendar = Calendar.getInstance().apply { timeInMillis = record.recordedAtMillis }
+                    tVtime.text = SimpleDateFormat("yyyy-MM-dd a hh:mm:ss").format(calendar.time)
+                    tVrank.text = (position + 1).toString()
+                }
+        }
+
+        override fun getItemCount(): Int {
+            return min(currentSize + 1, records.size)
+        }
+
+        fun refresh() {
+            loading = true
+            records = RecordManager.recordList.sortedByDescending { it.score }
+            notifyDataSetChanged()
+            loading = false
+        }
+
+        fun loadMore() {
+            val onFinishHandler = Handler {
+                notifyDataSetChanged()
+                loading = false
+                true
+            }
+            loading = true
+            Thread {
+                Thread.sleep(1000)
+                currentSize += 10
+                onFinishHandler.sendEmptyMessage(0)
+            }.start()
+        }
+
+        open class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
+
+        class ItemViewHolder(itemView: View) : ViewHolder(itemView) {
+            val tVscore: TextView = itemView.findViewById(R.id.tVscore)
+            val tVtime: TextView = itemView.findViewById(R.id.tVtime)
+            val tVrank: TextView = itemView.findViewById(R.id.tVrank)
+            val iBreplay: ImageButton = itemView.findViewById(R.id.iBreplay)
+            val iBdelete: ImageButton = itemView.findViewById(R.id.iBdelete)
+        }
+
+        class LoadingViewHolder(view: View) : ViewHolder(view)
     }
 }
