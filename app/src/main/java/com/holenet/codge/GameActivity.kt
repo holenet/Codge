@@ -119,22 +119,22 @@ class GameActivity : AppCompatActivity() {
 
                     // buttons on play
                     bTccw.setOnTouchListener { _, event ->
-                        if (event.action == MotionEvent.ACTION_DOWN) {
+                        if (event.action == MotionEvent.ACTION_DOWN && !isReplaying) {
                             toTurn = !toTurn
                         }
                         true
                     }
                     bTcw.setOnTouchListener { _, event ->
-                        if (event.action == MotionEvent.ACTION_DOWN) {
+                        if (event.action == MotionEvent.ACTION_DOWN && !isReplaying) {
                             toTurn = !toTurn
                         }
                         true
                     }
                     bTjump.setOnTouchListener { _, event ->
-                        if (event.action == MotionEvent.ACTION_DOWN) {
+                        if (event.action == MotionEvent.ACTION_DOWN && !isReplaying) {
                             if (toJumpOff) toJumpOff = false
                             toJumpOn = true
-                        } else if (event.action == MotionEvent.ACTION_UP) {
+                        } else if (event.action == MotionEvent.ACTION_UP && !isReplaying) {
                             toJumpOff = true
                         }
                         true
@@ -467,7 +467,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    class RecordRecyclerViewAdapter(context: Context) : RecyclerView.Adapter<RecordRecyclerViewAdapter.ViewHolder>() {
+    inner class RecordRecyclerViewAdapter(context: Context) : RecyclerView.Adapter<RecordRecyclerViewAdapter.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
         private var records: List<Record> = ArrayList()
         private var currentSize = 0
@@ -494,6 +494,10 @@ class GameActivity : AppCompatActivity() {
                     val calendar = Calendar.getInstance().apply { timeInMillis = record.recordedAtMillis }
                     tVtime.text = SimpleDateFormat("yyyy-MM-dd a hh:mm:ss").format(calendar.time)
                     tVrank.text = (position + 1).toString()
+                    iBreplay.setOnClickListener {
+                        gameView?.startReplay(record)
+                        changeRankingMode(false)
+                    }
                 }
         }
 
@@ -522,9 +526,9 @@ class GameActivity : AppCompatActivity() {
             }.start()
         }
 
-        open class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
+        open inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
-        class ItemViewHolder(itemView: View) : ViewHolder(itemView) {
+        inner class ItemViewHolder(itemView: View) : ViewHolder(itemView) {
             val tVscore: TextView = itemView.findViewById(R.id.tVscore)
             val tVtime: TextView = itemView.findViewById(R.id.tVtime)
             val tVrank: TextView = itemView.findViewById(R.id.tVrank)
@@ -532,6 +536,6 @@ class GameActivity : AppCompatActivity() {
             val iBdelete: ImageButton = itemView.findViewById(R.id.iBdelete)
         }
 
-        class LoadingViewHolder(view: View) : ViewHolder(view)
+        inner class LoadingViewHolder(view: View) : ViewHolder(view)
     }
 }

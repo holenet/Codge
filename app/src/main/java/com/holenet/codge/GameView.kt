@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat
 import android.view.MotionEvent
 import android.view.SurfaceView
 import android.widget.Toast
+import java.util.*
 import kotlin.math.*
 
 @SuppressLint("ViewConstructor")
@@ -37,6 +38,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     private var gameThread: Thread? = null
     var firstPlay = true; private set
     private var isPaused = false
+    private var random = Random()
 
     // input variables
     var startDirection: Direction? = null
@@ -87,6 +89,8 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
     // game record and replay
     var record: Record? = null
+    var isReplaying = false
+    var nextInputIndex = 0
 
     // calculate fps
     // NOTE: This is for development environment, should be erased on the production releases
@@ -190,8 +194,23 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         spinningDirection = Direction.STP
         canvasRotation = 0f
 
-        if (dir != Direction.STP)
-            record = Record(System.currentTimeMillis(), firstDirection = dir)
+        if (dir != Direction.STP && !isReplaying) {
+            val seed = System.currentTimeMillis()
+            record = Record(System.currentTimeMillis(), seed, dir)
+            random = Random(seed)
+        }
+    }
+
+    private fun injectFakeInput() {
+        val record = record ?: return
+        while (nextInputIndex < record.inputList.size && record.inputList[nextInputIndex].first == gameTicks) {
+            when (record.inputList[nextInputIndex].second) {
+                Input.TURN -> toTurn = true
+                Input.JUMP_ON -> toJumpOn = true
+                Input.JUMP_OFF -> toJumpOff = true
+            }
+            nextInputIndex++
+        }
     }
 
     private fun processInput() {
@@ -210,20 +229,20 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                     player.turn()
                     onPlayerTurn(player.dir)
                     haveTurned = true
-                    record?.inputList?.add(Pair(gameTicks, Input.TURN))
+                    if (!isReplaying) record?.inputList?.add(Pair(gameTicks, Input.TURN))
                 }
 
                 val toJumpOn = toJumpOn
                 this.toJumpOn = false
                 if (toJumpOn) {
                     player.jumping = true
-                    record?.inputList?.add(Pair(gameTicks, Input.JUMP_ON))
+                    if (!isReplaying) record?.inputList?.add(Pair(gameTicks, Input.JUMP_ON))
                 } else {
                     val toJumpOff = toJumpOff
                     this.toJumpOff = false
                     if (toJumpOff) {
                         player.jumping = false
-                        record?.inputList?.add(Pair(gameTicks, Input.JUMP_OFF))
+                        if (!isReplaying) record?.inputList?.add(Pair(gameTicks, Input.JUMP_OFF))
                     }
                 }
             }
@@ -257,16 +276,23 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         player.isFree = true
 
         onGameOver()
-        with(pref.edit()) {
-            bestScore = max(bestScore, score)
-            putInt(prefKeyBaseScore, bestScore)
-            apply()
-        }
 
-        val record = record
-        this.record = null
-        if (record != null) {
-            RecordManager.saveRecord(context, record.apply { score = this@GameView.score })
+        if (!isReplaying) {
+            with(pref.edit()) {
+                bestScore = max(bestScore, score)
+                putInt(prefKeyBaseScore, bestScore)
+                apply()
+            }
+
+            val record = record
+            this.record = null
+            if (record != null) {
+                RecordManager.saveRecord(context, record.apply { score = this@GameView.score })
+            }
+        } else {
+            isReplaying = false
+            record = null
+            nextInputIndex = 0
         }
     }
 
@@ -277,11 +303,12 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         while (running) {
             var loops = 0
             while (System.currentTimeMillis() > nextGameMillis && loops < MAX_FRAME_SKIP) {
-                if (flagGameStart) {
+                if (flagGameStart)
                     startPlay()
-                }
                 if (flagGameOver)
                     gameOver()
+
+                if (isReplaying) injectFakeInput()
                 processInput()
 
                 if (gameMode == GameMode.PLAYING || !isPaused) {
@@ -319,7 +346,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         fun addNewBall() {
             var count = 0
             while (true) {
-                val theta = (Math.random() * 360 - 180).toFloat()
+                val theta = (random.nextDouble() * 360 - 180).toFloat()
                 if (theta diff player.theta < 110)
                     continue
                 val ball = BouncingBall(theta, 0f)
@@ -392,7 +419,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
                 // spinning
                 if (spinningDirection != Direction.STP) {
-                    if (Math.random() < 0.03) {
+                    if (random.nextDouble() < 0.03) {
                         spinningDirection = if (spinningDirection == Direction.CCW) Direction.CW else Direction.CCW
                     } else {
                         spinningSpeed += spinningDirection.rotation * 0.05f
@@ -452,6 +479,13 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 holder.unlockCanvasAndPost(this)
             }
         }
+    }
+
+    fun startReplay(record: Record) {
+        this.record = record
+        isReplaying = true
+        random = Random(record.seed)
+        startDirection = record.firstDirection
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
