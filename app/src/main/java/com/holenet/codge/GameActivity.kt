@@ -88,6 +88,38 @@ class GameActivity : AppCompatActivity() {
                 bigHeight = cLcontrol.height
                 entireWidth = fLgame.width
 
+                // customize view pager
+                with (vPcustom) {
+                    adapter = ViewPagerAdapter(this@GameActivity)
+                    overScrollMode = View.OVER_SCROLL_NEVER
+                    addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+                        override fun onPageScrollStateChanged(state: Int) {}
+                        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
+                        override fun onPageSelected(position: Int) {
+                            gameView?.highlightedType = positionToType(position)
+                        }
+                    })
+                }
+
+                // ranking records
+                with (rVranking) {
+                    RecordManager.loadRecordList(context)
+                    val linearLayoutManager = LinearLayoutManager(context)
+                    layoutManager = linearLayoutManager
+                    val recordAdapter = RecordRecyclerViewAdapter(context)
+                    adapter = recordAdapter
+                    overScrollMode = View.OVER_SCROLL_NEVER
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
+                            val totalItemCount = linearLayoutManager.itemCount
+                            val lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition()
+                            if (!recordAdapter.loading && totalItemCount == lastVisibleItem + 1) {
+                                recordAdapter.loadMore()
+                            }
+                        }
+                    })
+                }
+
                 with(GameView(this@GameActivity, fLgame.width / 2)) {
                     gameView = this
                     fLgame.addView(this)
@@ -155,41 +187,14 @@ class GameActivity : AppCompatActivity() {
                     bTbackRight.setOnClickListener {
                         changeRankingMode(false)
                     }
+                    bTsort.setOnClickListener {
+                        with (rVranking.adapter as RecordRecyclerViewAdapter) {
+                            refresh((this.sortType + 1) % 2)
+                        }
+                    }
 
                     // start
                     onResume()
-                }
-
-                // customize view pager
-                with (vPcustom) {
-                    adapter = ViewPagerAdapter(this@GameActivity)
-                    overScrollMode = View.OVER_SCROLL_NEVER
-                    addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
-                        override fun onPageScrollStateChanged(state: Int) {}
-                        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
-                        override fun onPageSelected(position: Int) {
-                            gameView?.highlightedType = positionToType(position)
-                        }
-                    })
-                }
-
-                // ranking records
-                with (rVranking) {
-                    RecordManager.loadRecordList(context)
-                    val linearLayoutManager = LinearLayoutManager(context)
-                    layoutManager = linearLayoutManager
-                    val recordAdapter = RecordRecyclerViewAdapter(context)
-                    adapter = recordAdapter
-                    overScrollMode = View.OVER_SCROLL_NEVER
-                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                        override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
-                            val totalItemCount = linearLayoutManager.itemCount
-                            val lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition()
-                            if (!recordAdapter.loading && totalItemCount == lastVisibleItem + 1) {
-                                recordAdapter.loadMore()
-                            }
-                        }
-                    })
                 }
             }
         })
@@ -299,7 +304,7 @@ class GameActivity : AppCompatActivity() {
     private fun changeRankingMode(onRanking: Boolean, onEnd: (() -> Unit)? = null) {
         if (rankingAnim?.isRunning == true) rankingAnim?.cancel()
 
-        val views = arrayOf(bTranking, bTcustom, bTleft, bTright, bTbackRight, cLranking)
+        val views = arrayOf(bTranking, bTcustom, bTleft, bTright, bTbackRight, bTsort, cLranking)
 
         ValueAnimator.ofFloat(currentRankingValue, if (onRanking) 1f else 0f).apply {
             duration = (UI_ANIM_TIME * abs(currentRankingValue - if (onRanking) 1f else 0f)).toLong()
@@ -315,6 +320,7 @@ class GameActivity : AppCompatActivity() {
 
                 val invertedValue = 1f - value
                 bTbackRight.x = customX - (customX + entireWidth) * invertedValue
+                bTsort.x = - (customX + entireWidth) * invertedValue
                 cLranking.x = -entireWidth * invertedValue
             }
             addListener(object : Animator.AnimatorListener {
@@ -369,6 +375,10 @@ class GameActivity : AppCompatActivity() {
         private val eachWidth = ((vPcustom.width * 0.85f) / columnsNum).roundToInt()
         private val imageFrame = BitmapFactory.decodeResource(context.resources, R.drawable.item_frame)
         private val imageButtonPlus = BitmapFactory.decodeResource(context.resources, R.drawable.button_plus)
+
+        init {
+            CustomManager.load(context)
+        }
 
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
             val view = LayoutInflater.from(context).inflate(R.layout.fragment_picker, container, false)
@@ -482,6 +492,10 @@ class GameActivity : AppCompatActivity() {
         private var currentSize = 0
         var loading = false; private set
 
+        val SORT_SCORE = 0
+        val SORT_TIME = 1
+        var sortType = context.getSharedPreferences("record", 0).getInt("sort_type", SORT_SCORE); private set
+
         override fun getItemViewType(position: Int): Int {
             return if (position < currentSize) 0 else -1
         }
@@ -515,9 +529,17 @@ class GameActivity : AppCompatActivity() {
             return min(currentSize + 1, records.size)
         }
 
-        fun refresh() {
+        fun refresh(sortType: Int = this.sortType) {
             loading = true
-            records = RecordManager.recordList.sortedByDescending { it.score }
+            if (this.sortType != sortType) {
+                this.sortType = sortType
+                applicationContext.getSharedPreferences("record", 0).edit().apply { putInt("sort_type", sortType) }.apply()
+            }
+            records = when (sortType) {
+                SORT_SCORE -> RecordManager.recordList.sortedByDescending { it.score }
+                SORT_TIME -> RecordManager.recordList.sortedByDescending { it.recordedAtMillis }
+                else -> RecordManager.recordList.toList()
+            }
             notifyDataSetChanged()
             loading = false
         }

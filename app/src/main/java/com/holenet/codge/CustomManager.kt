@@ -43,6 +43,7 @@ object CustomManager {
     )
     private val colorsSet = HashMap<CustomType, MutableList<Int>>()
     private val indexSet = HashMap<CustomType, Int>()
+    private var loaded = false
 
     private fun serializeColors(colors: List<Int>): String {
         return TextUtils.join("-", colors.map { it.toColorString() })
@@ -55,6 +56,7 @@ object CustomManager {
     private fun getPreferences(context: Context): SharedPreferences = context.getSharedPreferences(prefName, 0)
 
     fun load(context: Context) {
+        if (loaded) return
         val pref = getPreferences(context)
         for (type in CustomType.values()) {
             val colorsString = pref.getString(type.toString(), null)
@@ -62,6 +64,7 @@ object CustomManager {
             val index = pref.getInt(type.toString() + "index", defaultIndices[type]!!)
             indexSet[type] = index
         }
+        loaded = true
     }
 
     fun getColors(type: CustomType): MutableList<Int> {

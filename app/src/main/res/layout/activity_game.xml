@@ -116,6 +116,21 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <ImageButton
+            android:id="@+id/bTsort"
+            style="@style/ImageButtonStyleSmall"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:contentDescription="sort"
+            android:elevation="1dp"
+            android:padding="4dp"
+            android:src="@drawable/button_sort"
+            android:translationX="10000dp"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@+id/guideline4"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <android.support.constraint.Guideline
             android:id="@+id/guideline3"
             android:layout_width="wrap_content"
