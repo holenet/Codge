@@ -296,7 +296,7 @@ class GameActivity : AppCompatActivity() {
 
     private var rankingAnim: ValueAnimator? = null
     private var currentRankingValue = 0f
-    private fun changeRankingMode(onRanking: Boolean) {
+    private fun changeRankingMode(onRanking: Boolean, onEnd: (() -> Unit)? = null) {
         if (rankingAnim?.isRunning == true) rankingAnim?.cancel()
 
         val views = arrayOf(bTranking, bTcustom, bTleft, bTright, bTbackRight, cLranking)
@@ -328,6 +328,7 @@ class GameActivity : AppCompatActivity() {
                     if (onRanking) {
                         (rVranking.adapter as RecordRecyclerViewAdapter).refresh()
                     }
+                    if (onEnd != null) onEnd()
                 }
                 override fun onAnimationCancel(animation: Animator?) {
                     onAnimationEnd(null)
@@ -346,6 +347,14 @@ class GameActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         gameView?.onResume()
+    }
+
+    override fun onBackPressed() {
+        if (gameView?.gameMode == GameView.Companion.GameMode.PLAYING) {
+            gameView?.stopGame()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     fun positionToType(position: Int) = when (position) {
@@ -495,8 +504,9 @@ class GameActivity : AppCompatActivity() {
                     tVtime.text = SimpleDateFormat("yyyy-MM-dd a hh:mm:ss").format(calendar.time)
                     tVrank.text = (position + 1).toString()
                     iBreplay.setOnClickListener {
-                        gameView?.startReplay(record)
-                        changeRankingMode(false)
+                        changeRankingMode(false) {
+                            gameView?.startReplay(record)
+                        }
                     }
                 }
         }

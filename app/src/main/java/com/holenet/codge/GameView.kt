@@ -311,7 +311,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 if (isReplaying) injectFakeInput()
                 processInput()
 
-                if (gameMode == GameMode.PLAYING || !isPaused) {
+                if ((gameMode == GameMode.PLAYING && !isReplaying) || !isPaused) {
                     gameTicks++
                     update()
                     if (gameMode == GameMode.PLAYING)
@@ -486,6 +486,10 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         isReplaying = true
         random = Random(record.seed)
         startDirection = record.firstDirection
+    }
+
+    fun stopGame() {
+        flagGameOver = true
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
