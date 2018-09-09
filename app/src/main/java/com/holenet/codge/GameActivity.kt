@@ -8,6 +8,7 @@ import android.graphics.*
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.support.design.widget.FloatingActionButton
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AlertDialog
@@ -16,6 +17,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
 import android.widget.ImageButton
+import android.widget.ProgressBar
 import android.widget.TextView
 import com.holenet.codge.GameView.Companion.SKIP_MILLIS
 import kotlinx.android.synthetic.main.activity_game.*
@@ -109,15 +111,6 @@ class GameActivity : AppCompatActivity() {
                     val recordAdapter = RecordRecyclerViewAdapter(context)
                     adapter = recordAdapter
                     overScrollMode = View.OVER_SCROLL_NEVER
-                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                        override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
-                            val totalItemCount = linearLayoutManager.itemCount
-                            val lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition()
-                            if (!recordAdapter.loading && totalItemCount == lastVisibleItem + 1) {
-                                recordAdapter.loadMore()
-                            }
-                        }
-                    })
                 }
 
                 with(GameView(this@GameActivity, fLgame.width / 2)) {
@@ -486,7 +479,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    inner class RecordRecyclerViewAdapter(context: Context) : RecyclerView.Adapter<RecordRecyclerViewAdapter.ViewHolder>() {
+    inner class RecordRecyclerViewAdapter(context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
         private var records: List<Record> = ArrayList()
         private var currentSize = 0
@@ -500,15 +493,15 @@ class GameActivity : AppCompatActivity() {
             return if (position < currentSize) 0 else -1
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecordRecyclerViewAdapter.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             return if (viewType == 0)
                 ItemViewHolder(inflater.inflate(R.layout.item_record, parent, false))
             else
-                LoadingViewHolder(inflater.inflate(R.layout.item_loading, parent, false))
+                LoadViewHolder(inflater.inflate(R.layout.item_load_more, parent, false))
         }
 
         @SuppressLint("SimpleDateFormat")
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val record = records[position]
             if (holder is ItemViewHolder)
                 holder.apply {
@@ -521,6 +514,22 @@ class GameActivity : AppCompatActivity() {
                         changeRankingMode(false) {
                             gameView?.startReplay(record)
                         }
+                    }
+                }
+            else if (holder is LoadViewHolder)
+                holder.apply {
+                    fABmore.setOnClickListener {
+                        fABmore.visibility = View.GONE
+                        pBloading.visibility = View.VISIBLE
+                        loadMore {
+                            fABmore.visibility = View.VISIBLE
+                            pBloading.visibility = View.GONE
+                        }
+                    }
+                    if (position == 0) {
+                        fABmore.visibility = View.GONE
+                        pBloading.visibility = View.VISIBLE
+                        Handler { fABmore.performClick() }.sendEmptyMessageDelayed(0, 100)
                     }
                 }
         }
@@ -540,27 +549,20 @@ class GameActivity : AppCompatActivity() {
                 SORT_TIME -> RecordManager.recordList.sortedByDescending { it.recordedAtMillis }
                 else -> RecordManager.recordList.toList()
             }
+            currentSize = 0
             notifyDataSetChanged()
             loading = false
         }
 
-        fun loadMore() {
-            val onFinishHandler = Handler {
-                notifyDataSetChanged()
-                loading = false
-                true
-            }
+        private fun loadMore(onEnd: (() -> Unit)? = null) {
             loading = true
-            Thread {
-                Thread.sleep(1000)
-                currentSize += 10
-                onFinishHandler.sendEmptyMessage(0)
-            }.start()
+            currentSize += 10
+            notifyDataSetChanged()
+            loading = false
+            if (onEnd != null) onEnd()
         }
 
-        open inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
-
-        inner class ItemViewHolder(itemView: View) : ViewHolder(itemView) {
+        inner class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val tVscore: TextView = itemView.findViewById(R.id.tVscore)
             val tVtime: TextView = itemView.findViewById(R.id.tVtime)
             val tVrank: TextView = itemView.findViewById(R.id.tVrank)
@@ -568,6 +570,9 @@ class GameActivity : AppCompatActivity() {
             val iBdelete: ImageButton = itemView.findViewById(R.id.iBdelete)
         }
 
-        inner class LoadingViewHolder(view: View) : ViewHolder(view)
+        inner class LoadViewHolder(loadView: View) : RecyclerView.ViewHolder(loadView) {
+            val pBloading: ProgressBar = itemView.findViewById(R.id.pBloading)
+            val fABmore: FloatingActionButton = itemView.findViewById(R.id.fABmore)
+        }
     }
 }
