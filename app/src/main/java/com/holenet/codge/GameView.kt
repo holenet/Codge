@@ -45,6 +45,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
     var toTurn: Boolean = false
     var toJumpOn: Boolean = false
     var toJumpOff: Boolean = false
+    var toKillSelf: Boolean = false
 
     // models
     private val player = Player()
@@ -183,6 +184,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         toTurn = false
         toJumpOn = false
         toJumpOff = false
+        toKillSelf = false
 
         player.initialize(dir)
 
@@ -208,6 +210,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                 Input.TURN -> toTurn = true
                 Input.JUMP_ON -> toJumpOn = true
                 Input.JUMP_OFF -> toJumpOff = true
+                Input.KILL_SELF -> toKillSelf = true
             }
             nextInputIndex++
         }
@@ -244,6 +247,12 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
                         player.jumping = false
                         if (!isReplaying) record?.inputList?.add(Pair(gameTicks, Input.JUMP_OFF))
                     }
+                }
+                val toKillSelf = toKillSelf
+                this.toKillSelf = false
+                if (toKillSelf) {
+                    flagGameOver = true
+                    if (!isReplaying) record?.inputList?.add(Pair(gameTicks, Input.KILL_SELF))
                 }
             }
         }
@@ -486,10 +495,6 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
         isReplaying = true
         random = Random(record.seed)
         startDirection = record.firstDirection
-    }
-
-    fun stopGame() {
-        flagGameOver = true
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

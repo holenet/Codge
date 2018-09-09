@@ -350,7 +350,7 @@ class GameActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         if (gameView?.gameMode == GameView.Companion.GameMode.PLAYING) {
-            gameView?.stopGame()
+            gameView?.toKillSelf = true
         } else {
             super.onBackPressed()
         }

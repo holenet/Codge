@@ -4,7 +4,7 @@ import android.content.Context
 import java.io.*
 
 enum class Input {
-    TURN, JUMP_ON, JUMP_OFF
+    TURN, JUMP_ON, JUMP_OFF, KILL_SELF
 }
 
 class Record(val recordedAtMillis: Long, val seed: Long = recordedAtMillis, val firstDirection: Direction) : Serializable {
