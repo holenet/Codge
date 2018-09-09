@@ -543,13 +543,13 @@ class GameActivity : AppCompatActivity() {
             if (this.sortType != sortType) {
                 this.sortType = sortType
                 applicationContext.getSharedPreferences("record", 0).edit().apply { putInt("sort_type", sortType) }.apply()
+                currentSize = 0
             }
             records = when (sortType) {
                 SORT_SCORE -> RecordManager.recordList.sortedByDescending { it.score }
                 SORT_TIME -> RecordManager.recordList.sortedByDescending { it.recordedAtMillis }
                 else -> RecordManager.recordList.toList()
             }
-            currentSize = 0
             notifyDataSetChanged()
             loading = false
         }
