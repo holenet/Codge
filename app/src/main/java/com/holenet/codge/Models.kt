@@ -3,7 +3,10 @@ package com.holenet.codge
 import kotlin.math.*
 
 enum class Direction(val rotation: Int) {
-    STP(0), CCW(-1), CW(1)
+    STP(0), CCW(-1), CW(1);
+    companion object {
+        val values = values()
+    }
 }
 
 fun Double.toDegree() = (this * 180 / PI).toFloat()

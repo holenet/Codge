@@ -1,43 +1,94 @@
 package com.holenet.codge
 
+import android.app.Application
+import android.arch.lifecycle.AndroidViewModel
+import android.arch.lifecycle.LiveData
+import android.arch.persistence.room.*
 import android.content.Context
-import java.io.*
+import android.os.AsyncTask
+import android.text.TextUtils
 
 enum class Input {
-    TURN, JUMP_ON, JUMP_OFF, KILL_SELF
+    TURN, JUMP_ON, JUMP_OFF, KILL_SELF;
+    companion object {
+        val values = values()
+    }
 }
 
-class Record(val recordedAtMillis: Long, val seed: Long = recordedAtMillis, val firstDirection: Direction) : Serializable {
-    val inputList: ArrayList<Pair<Int, Input>> = ArrayList()
+class Converters {
+    companion object {
+        @TypeConverter @JvmStatic
+        fun serializeDirection(direction: Direction) = direction.ordinal
+        @TypeConverter @JvmStatic
+        fun deserializeDirection(ordinal: Int) = Direction.values[ordinal]
+
+        @TypeConverter @JvmStatic
+        fun serializeInputList(inputs: MutableList<Pair<Int, Input>>) = TextUtils.join("-", inputs.map { (a, b) -> "$a:${b.ordinal}" })!!
+        @TypeConverter @JvmStatic
+        fun deserializeInputList(string: String) = if (string.isEmpty()) mutableListOf() else
+            string.split("-").map {
+                with (it.split(":")) {
+                    get(0).toInt() to Input.values[get(1).toInt()]
+                }
+            }.toMutableList()
+    }
+}
+
+@Entity(tableName = "records")
+class Record(@PrimaryKey(autoGenerate = true) var id: Long? = null,
+             var recordedAtMillis: Long,
+             var seed: Long = recordedAtMillis,
+             var firstDirection: Direction
+) {
+    var inputList: MutableList<Pair<Int, Input>> = ArrayList()
     var score = 0
 }
 
-object RecordManager {
-    var recordList = ArrayList<Record>(); private set
+@Dao
+interface RecordDao {
+    @Query("SELECT * from records ORDER BY score DESC") fun getAllByScore(): LiveData<List<Record>>
+    @Query("SELECT * from records ORDER BY recordedAtMillis DESC") fun getAllByRecordedTime(): LiveData<List<Record>>
+    @Insert fun insert(record: Record)
+    @Delete fun delete(record: Record)
+    @Query("DELETE FROM records") fun deleteAll()
+}
 
-    private fun getFile(context: Context) = File(context.filesDir, "record.data")
+@Database(entities = [Record::class], version = 2)
+@TypeConverters(Converters::class)
+abstract class RecordDatabase : RoomDatabase() {
+    abstract fun recordDao(): RecordDao
 
-    fun saveRecord(context: Context, record: Record) {
-        Thread {
-            recordList.add(record)
-            val file = getFile(context)
-            val outStream = ObjectOutputStream(FileOutputStream(file))
-            outStream.writeObject(recordList)
-            outStream.close()
-        }.start()
-    }
+    companion object {
+        private var INSTANCE: RecordDatabase? = null
 
-    fun loadRecordList(context: Context) {
-        recordList.clear()
-        val file = File(context.filesDir, "record.data")
-        if (file.createNewFile()) return
-
-        val inStream = ObjectInputStream(FileInputStream(file))
-        try {
-            for (record in inStream.readObject() as List<Record>) {
-                recordList.add(record)
+        fun getInstance(context: Context): RecordDatabase {
+            if (INSTANCE == null) {
+                synchronized(RecordDatabase::class) {
+                    INSTANCE = Room.databaseBuilder(context.applicationContext, RecordDatabase::class.java, "record.db").fallbackToDestructiveMigration().build()
+                }
             }
-        } catch (e: Exception) {}
-        inStream.close()
+            return INSTANCE!!
+        }
     }
+}
+
+class RecordRepository(application: Application) {
+    private val dao = RecordDatabase.getInstance(application).recordDao()
+    val allRecords = dao.getAllByScore()
+
+    fun insert(record: Record) { InsertTask(dao).execute(record) }
+
+    class InsertTask(val dao: RecordDao) : AsyncTask<Record, Void, Void>() {
+        override fun doInBackground(vararg params: Record?): Void? {
+            dao.insert(params[0]!!)
+            return null
+        }
+    }
+}
+
+class RecordViewModel(application: Application) : AndroidViewModel(application) {
+    private val repo = RecordRepository(application)
+    val allRecords = repo.allRecords
+
+    fun insert(record: Record) = repo.insert(record)
 }

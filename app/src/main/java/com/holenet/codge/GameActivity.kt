@@ -3,6 +3,8 @@ package com.holenet.codge
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.graphics.*
 import android.support.v7.app.AppCompatActivity
@@ -41,6 +43,8 @@ class GameActivity : AppCompatActivity() {
     var bigHeight = 0
     var entireWidth = 0
 
+    private lateinit var recordViewModel: RecordViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -58,6 +62,21 @@ class GameActivity : AppCompatActivity() {
                 fLfade.alpha = 1 - value
             }
             start()
+        }
+
+        // record database
+        recordViewModel = ViewModelProviders.of(this).get(RecordViewModel::class.java)
+
+        // ranking records
+        with (rVranking) {
+            val linearLayoutManager = LinearLayoutManager(context)
+            layoutManager = linearLayoutManager
+            val recordAdapter = RecordRecyclerViewAdapter(context)
+            adapter = recordAdapter
+            overScrollMode = View.OVER_SCROLL_NEVER
+            recordViewModel.allRecords.observe(this@GameActivity, Observer<List<Record>> {
+                if (it != null) recordAdapter.records = it
+            })
         }
 
         // UI handler
@@ -103,17 +122,7 @@ class GameActivity : AppCompatActivity() {
                     })
                 }
 
-                // ranking records
-                with (rVranking) {
-                    RecordManager.loadRecordList(context)
-                    val linearLayoutManager = LinearLayoutManager(context)
-                    layoutManager = linearLayoutManager
-                    val recordAdapter = RecordRecyclerViewAdapter(context)
-                    adapter = recordAdapter
-                    overScrollMode = View.OVER_SCROLL_NEVER
-                }
-
-                with(GameView(this@GameActivity, fLgame.width / 2)) {
+                with(GameView(this@GameActivity, fLgame.width / 2, recordViewModel)) {
                     gameView = this
                     fLgame.addView(this)
 
@@ -481,7 +490,7 @@ class GameActivity : AppCompatActivity() {
 
     inner class RecordRecyclerViewAdapter(context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val inflater = LayoutInflater.from(context)
-        private var records: List<Record> = ArrayList()
+        var records: List<Record> = ArrayList()
         private var currentSize = 0
         var loading = false; private set
 
@@ -546,9 +555,9 @@ class GameActivity : AppCompatActivity() {
                 currentSize = 0
             }
             records = when (sortType) {
-                SORT_SCORE -> RecordManager.recordList.sortedByDescending { it.score }
-                SORT_TIME -> RecordManager.recordList.sortedByDescending { it.recordedAtMillis }
-                else -> RecordManager.recordList.toList()
+                SORT_SCORE -> records.sortedByDescending(Record::score)
+                SORT_TIME -> records.sortedByDescending(Record::recordedAtMillis)
+                else -> records
             }
             notifyDataSetChanged()
             loading = false

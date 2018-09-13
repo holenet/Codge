@@ -13,7 +13,7 @@ import java.util.*
 import kotlin.math.*
 
 @SuppressLint("ViewConstructor")
-class GameView(context: Context, private val outerRadius: Int): SurfaceView(context), Runnable {
+class GameView(context: Context, private val outerRadius: Int, private val recordViewModel: RecordViewModel): SurfaceView(context), Runnable {
     companion object {
         const val TICKS_PER_SECOND = 50
         const val SKIP_MILLIS = 1000 / TICKS_PER_SECOND
@@ -198,7 +198,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
 
         if (dir != Direction.STP && !isReplaying) {
             val seed = System.currentTimeMillis()
-            record = Record(System.currentTimeMillis(), seed, dir)
+            record = Record(recordedAtMillis = System.currentTimeMillis(), seed = seed, firstDirection = dir)
             random = Random(seed)
         }
     }
@@ -296,7 +296,7 @@ class GameView(context: Context, private val outerRadius: Int): SurfaceView(cont
             val record = record
             this.record = null
             if (record != null) {
-                RecordManager.saveRecord(context, record.apply { score = this@GameView.score })
+                recordViewModel.insert(record.apply { score = this@GameView.score })
             }
         } else {
             isReplaying = false
