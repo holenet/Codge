@@ -3,17 +3,21 @@ package com.holenet.codge
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.opengl.GLES20
+import android.opengl.GLSurfaceView
+import android.opengl.GLU
 import android.os.Handler
 import android.os.Looper
 import android.support.v4.content.ContextCompat
 import android.view.MotionEvent
-import android.view.SurfaceView
 import android.widget.Toast
 import java.util.*
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.opengles.GL10
 import kotlin.math.*
 
 @SuppressLint("ViewConstructor")
-class GameView(context: Context, private val outerRadius: Int, private val recordViewModel: RecordViewModel): SurfaceView(context), Runnable {
+class GameView(context: Context, private val outerRadius: Int, private val recordViewModel: RecordViewModel): GLSurfaceView(context), Runnable, GLSurfaceView.Renderer {
     companion object {
         const val TICKS_PER_SECOND = 50
         const val SKIP_MILLIS = 1000 / TICKS_PER_SECOND
@@ -108,6 +112,39 @@ class GameView(context: Context, private val outerRadius: Int, private val recor
         loadBitmaps()
         initializeGame(Direction.STP)
         gameOver()
+    }
+
+    override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
+        gl.glClearColor(0.5f, 0.5f, 0.5f, 1f)
+        gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST)
+        gl.glShadeModel(GL10.GL_FLAT)
+        gl.glDisable(GL10.GL_DEPTH_TEST)
+        gl.glEnable(GL10.GL_BLEND)
+        gl.glBlendFunc(GL10.GL_ONE, GL10.GL_ONE_MINUS_SRC_ALPHA)
+
+        gl.glViewport(0, 0, width, height)
+        gl.glMatrixMode(GL10.GL_PROJECTION)
+        gl.glLoadIdentity()
+        gl.glEnable(GL10.GL_BLEND)
+        gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glShadeModel(GL10.GL_FLAT)
+        gl.glEnable(GL10.GL_TEXTURE_2D)
+
+        GLU.gluOrtho2D(gl, 0f, surfaceWidth.toFloat(), surfaceHeight.toFloat(), 0f)
+    }
+
+    var surfaceWidth: Int = -1
+    var surfaceHeight: Int = -1
+    override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
+        surfaceWidth = width
+        surfaceHeight = height
+
+        gl.glViewport(0, 0, width, height)
+        gl.glLoadIdentity()
+        GLU.gluOrtho2D(gl, 0f, width.toFloat(), height.toFloat(), 0f)
+    }
+
+    override fun onDrawFrame(gl: GL10) {
     }
 
     private fun loadBitmaps() {
@@ -333,7 +370,7 @@ class GameView(context: Context, private val outerRadius: Int, private val recor
 
             if (lastDrawTick != gameTicks) {
                 lastDrawTick = gameTicks
-                draw()
+//                draw()
             }
         }
     }
@@ -506,12 +543,12 @@ class GameView(context: Context, private val outerRadius: Int, private val recor
         return true
     }
 
-    fun onPause() {
+    override fun onPause() {
         running = false
         gameThread?.join()
     }
 
-    fun onResume() {
+    override fun onResume() {
         running = true
         gameThread?.join()
         gameThread = Thread(this)
